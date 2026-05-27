@@ -832,27 +832,71 @@ class Req:
         return self.dllm_config is not None
 
     def _init_fill_ids_for_dllm(self):
+        # Template-fill mode: user provides a pre-positioned scaffold (with
+        # mask_id at fill slots) via sampling_params.dllm_template_token_ids.
+        # We feed the template to the dllm algorithm in `block_size`-sized
+        # chunks (default 32), matching the algorithm's expected block layout.
+        # Scaffold positions (non-mask) in each chunk stay untouched because
+        # HierarchyBlock/SpeculativeBlock only refine `== mask_id` positions.
+        template = getattr(self.sampling_params, "dllm_template_token_ids", None)
         if not self.dllm_ids:
-            # First round: always do prompt-only causal prefill.
-            # This applies to both text-only and multimodal requests.
-            # The prefill generates an AR token which becomes the first
-            # token of the first dLLM block, matching the original HF
-            # implementation.
+            # First round: prompt-only causal prefill (same as default path).
             self.dllm_ids = list(self.origin_input_ids)
             self._dllm_prompt_prefilled = False
+            if template:
+                self._dllm_template_progress = 0
+                # EOS pad token id is hard-coded for Qwen-family backbones used
+                # by Fast-dVLM / LLaDA2; the algorithm leaves these alone
+                # (not mask_id) and the decoder strips them with
+                # skip_special_tokens=True. If you port to a different model
+                # family, override via dllm_algorithm_config["pad_token_id"].
+                self._dllm_template_pad = self.dllm_config.algorithm_config.get(
+                    "pad_token_id", 151643
+                )
         elif not getattr(self, '_dllm_prompt_prefilled', True):
-            # Second round after prompt prefill: add first block.
-            # Use [AR_token] + [mask] * (block_size - 1) if AR token was
-            # captured during prefill, matching original HF implementation.
-            ar_token = getattr(self, '_dllm_ar_first_token', None)
-            if ar_token is not None:
-                self.dllm_ids += [ar_token] + [self.dllm_config.mask_id] * (self.dllm_config.block_size - 1)
+            # Second round after prompt prefill.
+            bs = self.dllm_config.block_size
+            if template:
+                # First chunk of template. No AR-token override at position 0
+                # because the template scaffold typically starts with a
+                # structural char (e.g. `{`) that must stay intact.
+                chunk = list(template[0:bs])
+                # Pad last chunk to block_size with EOS if shorter.
+                while len(chunk) < bs:
+                    chunk.append(self._dllm_template_pad)
+                # Track offset of THIS chunk into the template, before
+                # updating progress. The algorithm uses it to slice the
+                # right window of dllm_template_position_gates.
+                self._dllm_template_chunk_offset = 0
+                self.dllm_ids += chunk
+                self._dllm_template_progress = min(bs, len(template))
             else:
-                self.dllm_ids += [self.dllm_config.mask_id] * self.dllm_config.block_size
+                ar_token = getattr(self, '_dllm_ar_first_token', None)
+                if ar_token is not None:
+                    self.dllm_ids += [ar_token] + [self.dllm_config.mask_id] * (bs - 1)
+                else:
+                    self.dllm_ids += [self.dllm_config.mask_id] * bs
             self._dllm_prompt_prefilled = True
         else:
-            self.dllm_block_offset += self.dllm_config.block_size
-            self.dllm_ids += [self.dllm_config.mask_id] * self.dllm_config.block_size
+            bs = self.dllm_config.block_size
+            if template:
+                start = self._dllm_template_progress
+                if start < len(template):
+                    chunk = list(template[start:start + bs])
+                    while len(chunk) < bs:
+                        chunk.append(self._dllm_template_pad)
+                    self._dllm_template_chunk_offset = start
+                    self.dllm_ids += chunk
+                    self._dllm_template_progress = min(start + bs, len(template))
+                    self.dllm_block_offset += bs
+                else:
+                    # Template exhausted. Should not reach here if
+                    # max_new_tokens is set to len(template). If it does,
+                    # return without appending so req finishes cleanly.
+                    pass
+            else:
+                self.dllm_block_offset += bs
+                self.dllm_ids += [self.dllm_config.mask_id] * bs
         self.fill_ids = self.dllm_ids
 
     def _dllm_needs_prompt_prefill(self):
@@ -2161,6 +2205,27 @@ class ScheduleBatch(ScheduleBatchDisaggregationDecodeMixin):
             is_prefill_only=self.is_prefill_only,
             dimensions=self.dimensions,
             dllm_block_offsets=[req.dllm_block_offset for req in self.reqs],
+            dllm_template_modes=[
+                bool(getattr(req.sampling_params, "dllm_template_token_ids", None))
+                for req in self.reqs
+            ],
+            # Per-position gates. For each req, this is a List[Optional[List[int]]]
+            # the same length as its dllm_template_token_ids; or None when no gates
+            # were supplied. Sliced per-chunk inside the dllm algorithm.
+            dllm_template_position_gates=[
+                getattr(req.sampling_params, "dllm_template_position_gates", None)
+                for req in self.reqs
+            ],
+            # Per-req chunk offset into the template — the FIRST position of
+            # the current chunk within dllm_template_token_ids. Algorithm uses
+            # it to slice the right window of dllm_template_position_gates.
+            dllm_template_chunk_offsets=[
+                getattr(req, "_dllm_template_chunk_offset", 0) for req in self.reqs
+            ],
+            dllm_template_forbidden_token_ids=[
+                getattr(req.sampling_params, "dllm_template_forbidden_token_ids", None)
+                for req in self.reqs
+            ],
             dllm_config=self.dllm_config,
             reqs=self.reqs,
             has_grammar=self.has_grammar,
@@ -2287,6 +2352,10 @@ class ModelWorkerBatch:
 
     # Diffusion LLM
     dllm_block_offsets: Optional[List[int]] = None
+    dllm_template_modes: Optional[List[bool]] = None
+    dllm_template_position_gates: Optional[List[Optional[List[Optional[List[int]]]]]] = None
+    dllm_template_chunk_offsets: Optional[List[int]] = None
+    dllm_template_forbidden_token_ids: Optional[List[Optional[List[int]]]] = None
     dllm_config: Optional[DllmConfig] = None
 
     # For constrained decoding

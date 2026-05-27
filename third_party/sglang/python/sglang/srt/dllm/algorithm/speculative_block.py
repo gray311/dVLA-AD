@@ -63,7 +63,19 @@ class SpeculativeBlock(DllmAlgorithm):
         total_len = len(forward_batch.input_ids)
         block_mask = forward_batch.input_ids == self.mask_id
         num_masked = block_mask.sum().item()
-        block_start = total_len - num_masked
+
+        # Template-fill mode: chunk is user-supplied scaffold + interleaved
+        # masks. AR-verify would reject scaffold positions (the scaffold is
+        # not the model's natural AR continuation), so we accept the full
+        # draft. block_start=0 returns all positions to the caller.
+        is_template_mode = bool(
+            getattr(forward_batch, "dllm_template_modes", None)
+            and forward_batch.dllm_template_modes[0]
+        )
+        if is_template_mode:
+            block_start = 0
+        else:
+            block_start = total_len - num_masked
 
         # --- detect new request & clear state ---
         is_new_request = False
@@ -73,9 +85,11 @@ class SpeculativeBlock(DllmAlgorithm):
                 self.last_inherited_token = None
                 self.last_block_end_position = None
 
-        # --- place inherited token at position 0 of an all-mask block ---
+        # --- place inherited token at position 0 of an all-mask block
+        # (skip in template mode — scaffold at position 0 must stay).
         if (
-            forward_batch.input_ids[0] == self.mask_id
+            not is_template_mode
+            and forward_batch.input_ids[0] == self.mask_id
             and self.last_inherited_token is not None
             and not is_new_request
         ):
@@ -97,6 +111,37 @@ class SpeculativeBlock(DllmAlgorithm):
         else:
             shifted = draft_logits
 
+        # Template-fill: apply per-position gates and global forbidden mask
+        # so structural slots (digits/signs/verbs) commit to valid tokens and
+        # free-text slots don't emit JSON-breaking chars. Without this the
+        # single-shot draft picks BPE artifacts like " down" / `,"` / `.0`.
+        if is_template_mode:
+            chunk_gates = getattr(forward_batch, "dllm_template_chunk_gates", None)
+            forbidden_ids = getattr(forward_batch, "dllm_template_forbidden_token_ids", None)
+            if chunk_gates is not None or forbidden_ids:
+                vocab_size = shifted.shape[-1]
+                device = shifted.device
+                if forbidden_ids:
+                    fmask = torch.zeros(vocab_size, dtype=torch.bool, device=device)
+                    for bid in forbidden_ids:
+                        if 0 <= bid < vocab_size:
+                            fmask[bid] = True
+                    # Apply to MASK positions only (don't trash committed scaffold)
+                    mp = forward_batch.input_ids == self.mask_id
+                    shifted[mp.unsqueeze(-1) & fmask.unsqueeze(0)] = float("-inf")
+                if chunk_gates is not None:
+                    minus_inf = float("-inf")
+                    for lp, allowed in enumerate(chunk_gates):
+                        if allowed is None or lp >= shifted.shape[0]:
+                            continue
+                        if forward_batch.input_ids[lp] != self.mask_id:
+                            continue
+                        keep = torch.zeros(vocab_size, dtype=torch.bool, device=device)
+                        for aid in allowed:
+                            if 0 <= aid < vocab_size:
+                                keep[aid] = True
+                        shifted[lp] = torch.where(keep, shifted[lp], torch.tensor(minus_inf, device=device))
+
         # materialize predictions before the output buffer is overwritten
         draft_preds = shifted.argmax(dim=-1)
 
@@ -116,15 +161,23 @@ class SpeculativeBlock(DllmAlgorithm):
 
         ar_tokens = verify_logits.argmax(dim=-1)
 
-        # --- AR comparison: ar[i] should equal block[i+1] ---
-        accepted_num = 0
-        for i in range(total_len - 1):
-            if ar_tokens[i] == forward_batch.input_ids[i + 1]:
-                accepted_num += 1
-            else:
-                break
-        accepted_num += 1  # correction / next-token prediction
-        accepted_num = min(accepted_num, total_len)
+        if is_template_mode:
+            # In template mode, the user has fixed the scaffold + the draft
+            # has filled mask positions. AR-verify would reject scaffold (the
+            # scaffold is not the model's natural AR continuation), shrinking
+            # the accepted prefix to almost nothing. Skip verify entirely and
+            # accept the full draft.
+            accepted_num = total_len
+        else:
+            # --- AR comparison: ar[i] should equal block[i+1] ---
+            accepted_num = 0
+            for i in range(total_len - 1):
+                if ar_tokens[i] == forward_batch.input_ids[i + 1]:
+                    accepted_num += 1
+                else:
+                    break
+            accepted_num += 1  # correction / next-token prediction
+            accepted_num = min(accepted_num, total_len)
 
         # --- determine output tokens ---
         if accepted_num >= total_len:

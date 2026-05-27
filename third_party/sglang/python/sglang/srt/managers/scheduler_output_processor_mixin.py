@@ -324,7 +324,11 @@ class SchedulerOutputProcessorMixin:
             if isinstance(ar_token, torch.Tensor):
                 ar_token = ar_token.item()
             req._dllm_ar_first_token = ar_token
-            req.output_ids.append(ar_token)
+            # In template-fill mode the template scaffold provides position 0
+            # of the response, so don't prepend the AR token (would duplicate
+            # or fight the scaffold's first character).
+            if not getattr(req.sampling_params, "dllm_template_token_ids", None):
+                req.output_ids.append(ar_token)
         else:
             req._dllm_ar_first_token = None
 

@@ -274,6 +274,21 @@ class ForwardBatch:
     # Position information
     positions: torch.Tensor = None
 
+    # Diffusion LLM: per-request flag indicating whether the request's response
+    # is a user-supplied template (scaffold + interleaved mask) rather than the
+    # default `[ar_token, mask*N]` block. The dllm algorithm checks this to
+    # bypass the AR-token override at position 0 and to return ALL block
+    # positions (scaffold + filled mask) rather than only the mask suffix.
+    dllm_template_modes: Optional[List[bool]] = None
+    # Sliced per-position vocab allowlists for the current chunk: List[Optional[List[int]]]
+    # of length block_size (== len(input_ids) here). Set to None or [None] * bs if
+    # no gating is active. The dllm algorithm applies gates to logits at each
+    # masked position before argmax/topk.
+    dllm_template_chunk_gates: Optional[List[Optional[List[int]]]] = None
+    # Global forbidden tokens applied at every MASKED position (in addition to
+    # any per-position gate allowlist). Use for JSON-meta blacklist.
+    dllm_template_forbidden_token_ids: Optional[List[int]] = None
+
     # For extend
     extend_num_tokens: Optional[int] = None
     extend_seq_lens: Optional[torch.Tensor] = None
@@ -493,6 +508,26 @@ class ForwardBatch:
                 ],
                 dtype=torch.int32,
             ).to(device, non_blocking=True)
+            # Propagate per-req template flag to the dllm algorithm.
+            ret.dllm_template_modes = batch.dllm_template_modes
+            # Slice per-chunk gates for the algorithm. Only the FIRST req's
+            # gates are used (dllm path is batch_size=1).
+            if (batch.dllm_template_position_gates
+                    and batch.dllm_template_position_gates[0] is not None):
+                full_gates = batch.dllm_template_position_gates[0]
+                offset = (batch.dllm_template_chunk_offsets[0]
+                           if batch.dllm_template_chunk_offsets else 0)
+                # Slice [offset:offset+block_size]; pad with None if past end.
+                window = full_gates[offset:offset + block_size]
+                while len(window) < block_size:
+                    window.append(None)
+                ret.dllm_template_chunk_gates = window
+            else:
+                ret.dllm_template_chunk_gates = None
+            if batch.dllm_template_forbidden_token_ids:
+                ret.dllm_template_forbidden_token_ids = (
+                    batch.dllm_template_forbidden_token_ids[0]
+                )
         elif (
             ret.spec_info is not None
             and getattr(ret.spec_info, "positions", None) is not None

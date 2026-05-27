@@ -59,6 +59,9 @@ class SamplingParams:
         stream_interval: Optional[int] = None,
         logit_bias: Optional[Dict[str, float]] = None,
         sampling_seed: Optional[int] = None,
+        dllm_template_token_ids: Optional[List[int]] = None,
+        dllm_template_position_gates: Optional[List[Optional[List[int]]]] = None,
+        dllm_template_forbidden_token_ids: Optional[List[int]] = None,
     ) -> None:
         self.max_new_tokens = max_new_tokens
         self.stop_strs = stop
@@ -88,6 +91,30 @@ class SamplingParams:
         self.stream_interval = stream_interval
         self.logit_bias = logit_bias
         self.sampling_seed = sampling_seed
+        # Diffusion LLM template-fill: when set, the engine uses these tokens
+        # (which may contain mask_id at fill positions) as the response block
+        # instead of auto-generating fresh `[mask] * block_size` blocks. Used
+        # for V3-style structured outputs (JSON scaffold + per-slot masks).
+        self.dllm_template_token_ids = dllm_template_token_ids
+        # Optional per-template-position vocab allowlist. Same length as
+        # dllm_template_token_ids; None at a position = unrestricted, a list
+        # at a position restricts that position's prediction to the given
+        # token ids. Used for structured slots (trajectory digits/signs,
+        # behavior verbs) to avoid BPE-boundary artifacts like `"slow  down"`
+        # (double space) or `"00..0"` (digit followed by `.`-bearing token).
+        self.dllm_template_position_gates = dllm_template_position_gates
+        # Global forbidden tokens (applied at EVERY masked position in
+        # template mode, ungated or otherwise). Use this for JSON-meta
+        # blacklist (`"`, `}`, `\`, etc.) so that even free-text slots like
+        # critical_object values cannot emit JSON-breaking chars.
+        self.dllm_template_forbidden_token_ids = dllm_template_forbidden_token_ids
+        # In template mode, the model is allowed to commit EOS at "soft-end"
+        # slots (e.g., critical_object tail after "none"). We must NOT let
+        # those EOS tokens terminate the response — the full scaffold needs
+        # to be returned. Force ignore_eos=True to keep going until max_new
+        # _tokens (which the loader sets to len(template)).
+        if self.dllm_template_token_ids is not None:
+            self.ignore_eos = True
 
         # Process some special cases
         if 0 <= self.temperature < _SAMPLING_EPS:

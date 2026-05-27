@@ -83,7 +83,20 @@ class HierarchyBlock(DllmAlgorithm):
         block_mask = forward_batch.input_ids == self.mask_id
         num_masked = block_mask.sum().item()
         num_sub_blocks = total_len // self.sub_block_size
-        block_start = total_len - num_masked
+
+        # Template-fill mode: the chunk is a user-supplied scaffold (with
+        # interleaved mask positions), not an [AR_token, mask*N] block.
+        is_template_mode = bool(
+            getattr(forward_batch, "dllm_template_modes", None)
+            and forward_batch.dllm_template_modes[0]
+        )
+        if is_template_mode:
+            # All chunk positions are NEW response content — scaffold tokens
+            # must be returned to the caller (they weren't already added to
+            # output_ids during prefill).
+            block_start = 0
+        else:
+            block_start = total_len - num_masked
 
         # Detect new request (positions start from 0) and clear inheritance
         is_new_request = False
@@ -93,14 +106,33 @@ class HierarchyBlock(DllmAlgorithm):
                 self.last_inherited_token = None
                 self.last_block_end_position = None
 
-        # Handle token inheritance for all-mask blocks
+        # Handle token inheritance for all-mask blocks (skip in template mode —
+        # template scaffold at position 0 must stay intact; if position 0 IS a
+        # mask we want the model to predict it fresh from bidir context).
         first_token_is_mask = forward_batch.input_ids[0] == self.mask_id
-        if first_token_is_mask and self.last_inherited_token is not None and not is_new_request:
+        if (not is_template_mode
+                and first_token_is_mask
+                and self.last_inherited_token is not None
+                and not is_new_request):
             forward_batch.input_ids[0] = self.last_inherited_token
 
         # === Denoising iterations: use bidirectional attention ===
         # These can run with CUDA Graph since attention type stays constant.
         self._set_attention_type(model_runner, AttentionType.ENCODER_ONLY)
+
+        # Pre-build keep-mask tensors for any gated chunk positions. We do
+        # this once per block (not per inner iteration) since gates are
+        # determined by template position, not by current fill state.
+        chunk_gates = getattr(forward_batch, "dllm_template_chunk_gates", None)
+        forbidden_ids = getattr(forward_batch, "dllm_template_forbidden_token_ids", None)
+        # Per-block pre-built (lazy on first forward when we know vocab_size):
+        # gate_block_keep: bool tensor [block_size, vocab_size]; rows for
+        #                  ungated positions are all True (no restriction).
+        # gate_block_active: bool tensor [block_size]; True = position has a gate.
+        # forbidden_mask: bool tensor [vocab_size]; True = forbidden everywhere.
+        gate_block_keep = None
+        gate_block_active = None
+        forbidden_mask = None
 
         # Process sub-blocks
         for sub_idx in range(num_sub_blocks):
@@ -125,17 +157,103 @@ class HierarchyBlock(DllmAlgorithm):
 
                 sub_logits = shifted_full[rel_start:rel_end, :]
 
+                # Apply per-position vocab allowlists (gates) and global
+                # forbidden token blacklist. Lazy-build masks once vocab_size
+                # is known. Vectorized: one mask op per sub-block, not per
+                # position.
+                if chunk_gates is not None or forbidden_ids:
+                    vocab_size = sub_logits.shape[-1]
+                    device = sub_logits.device
+                    if forbidden_ids and forbidden_mask is None:
+                        forbidden_mask = torch.zeros(vocab_size, dtype=torch.bool, device=device)
+                        for bid in forbidden_ids:
+                            if 0 <= bid < vocab_size:
+                                forbidden_mask[bid] = True
+                    if chunk_gates is not None and gate_block_keep is None:
+                        # Default: all True (no restriction). Then for gated
+                        # positions, replace with the allowlist mask.
+                        block_size = forward_batch.input_ids.shape[0]
+                        gate_block_keep = torch.ones(
+                            (block_size, vocab_size), dtype=torch.bool, device=device,
+                        )
+                        gate_block_active = torch.zeros(
+                            block_size, dtype=torch.bool, device=device,
+                        )
+                        for lp, allowed in enumerate(chunk_gates):
+                            if allowed is None or lp >= block_size:
+                                continue
+                            gate_block_active[lp] = True
+                            keep = torch.zeros(vocab_size, dtype=torch.bool, device=device)
+                            for aid in allowed:
+                                if 0 <= aid < vocab_size:
+                                    keep[aid] = True
+                            gate_block_keep[lp] = keep
+                    # Global forbidden — applied to ALL sub_logits rows in one op.
+                    if forbidden_mask is not None:
+                        sub_logits[:, forbidden_mask] = float("-inf")
+                    # Per-position allowlist — applied via vectorized where.
+                    if gate_block_active is not None:
+                        sub_keep = gate_block_keep[rel_start:rel_end]  # [SB, V]
+                        sub_active = gate_block_active[rel_start:rel_end]  # [SB]
+                        if sub_active.any():
+                            # Restrict: where active AND not-keep -> -inf
+                            block_minf = torch.full_like(sub_logits, float("-inf"))
+                            # Apply only to active positions
+                            restricted = torch.where(sub_keep, sub_logits, block_minf)
+                            sub_logits = torch.where(
+                                sub_active.unsqueeze(-1), restricted, sub_logits,
+                            )
+
                 # Compute predictions and confidence
                 preds = sub_logits.argmax(dim=-1)
                 probs = F.softmax(sub_logits, dim=-1)
                 conf = probs.gather(dim=-1, index=preds.unsqueeze(-1)).squeeze(-1)
                 conf = torch.where(sub_mask, conf, torch.tensor(-np.inf, device=conf.device))
 
-                # Confidence-based unmask
-                unmask = conf > self.threshold
-                if unmask.sum().item() == 0:
-                    unmask[conf.argmax()] = True
-                unmask = unmask & sub_mask
+                # Confidence-based unmask. In template-fill mode, use top-K
+                # commits sized by mask density of the sub-block:
+                #   - mostly-masked (free-text like explanation): k = ceil(N/4)
+                #     — gradual fill prevents "a-l-l-l-l-l" mode-collapse on
+                #     long all-mask runs where adjacent positions land on the
+                #     same high-prob filler.
+                #   - mostly-committed (sparse-mask in JSON scaffold blocks):
+                #     k = ceil(N/2) — aggressive since context is well-defined.
+                # Also commit any position with conf > threshold (handles the
+                # easy positions in a single pass).
+                if is_template_mode:
+                    sb_total = sub_mask.shape[0]
+                    num_masked_sub = int(sub_mask.sum().item())
+                    if num_masked_sub > 0:
+                        # Density-aware top-K:
+                        #   mostly-masked sub-block (free-text like
+                        #     explanation): commit 1 per iteration —
+                        #     prevents adjacent positions from landing on
+                        #     the same high-prob filler (",", "the", "a")
+                        #   moderately-masked: ceil(N/3) — gradual fill
+                        #   lightly-masked (JSON scaffold blocks): ceil(N/2)
+                        if num_masked_sub > (sb_total * 3 // 4):
+                            # Free-text (e.g. explanation): commit 3 per
+                            # iter. k=2 gives best quality but ~8 iters
+                            # per sub-block (slow). k=4+ mode-collapses
+                            # (adjacent positions commit to same filler).
+                            # k=3 is the sweet spot between latency and
+                            # quality on the V3 schema (verified empirically).
+                            k = 3
+                        elif num_masked_sub > (sb_total // 2):
+                            k = max(1, (num_masked_sub + 2) // 3)
+                        else:
+                            k = max(1, (num_masked_sub + 1) // 2)
+                        topk_idx = torch.topk(conf, k).indices
+                        unmask = torch.zeros_like(sub_mask)
+                        unmask[topk_idx] = True
+                        unmask = unmask & sub_mask
+                    else:
+                        unmask = torch.zeros_like(sub_mask)
+                else:
+                    unmask = conf > self.threshold
+                    if unmask.sum().item() == 0:
+                        unmask[conf.argmax()] = True
+                    unmask = unmask & sub_mask
 
                 # Update tokens
                 forward_batch.input_ids[rel_start:rel_end] = torch.where(
