@@ -129,7 +129,7 @@ def load(model_path=None, algorithm="mdm", mem_fraction_static=0.75,
     # because scaffold positions are already committed (visible bidirectional)
     # and only mask positions get refined.
     import yaml, tempfile
-    algo_config = {"sub_block_size": 16, "debug": False}
+    algo_config = {"sub_block_size": 32, "debug": False}
     cfg_file = tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False)
     yaml.safe_dump(algo_config, cfg_file)
     cfg_file.close()

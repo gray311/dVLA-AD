@@ -231,17 +231,17 @@ class HierarchyBlock(DllmAlgorithm):
                         #     the same high-prob filler (",", "the", "a")
                         #   moderately-masked: ceil(N/3) — gradual fill
                         #   lightly-masked (JSON scaffold blocks): ceil(N/2)
-                        if num_masked_sub > (sb_total * 3 // 4):
-                            # Free-text (e.g. explanation): commit 3 per
-                            # iter. k=2 gives best quality but ~8 iters
-                            # per sub-block (slow). k=4+ mode-collapses
-                            # (adjacent positions commit to same filler).
-                            # k=3 is the sweet spot between latency and
-                            # quality on the V3 schema (verified empirically).
-                            k = 3
+                        if num_masked_sub > (sb_total * 2 // 3):
+                            # Heavily-masked: k=1 to avoid adjacent-position
+                            # filler cascade ("a a a a"). Stays at k=1
+                            # until enough clean context exists to anchor
+                            # diverse predictions.
+                            k = 1
                         elif num_masked_sub > (sb_total // 2):
-                            k = max(1, (num_masked_sub + 2) // 3)
+                            # Majority-masked: k=2.
+                            k = 2
                         else:
+                            # Minority-masked: aggressive.
                             k = max(1, (num_masked_sub + 1) // 2)
                         topk_idx = torch.topk(conf, k).indices
                         unmask = torch.zeros_like(sub_mask)
