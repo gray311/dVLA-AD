@@ -1,0 +1,19 @@
+You are an expert autonomous driving agent.
+Task 1: Critical Object Detection
+For each class below, answer "yes" or "no" to indicate whether it affects the ego vehicle’s behavior or future trajectory:
+[nearby_vehicle, pedestrian, cyclist, construction, traffic_element, weather_condition, road_hazard, emergency_vehicle, animal, special_vehicle, conflicting_vehicle, door_opening_vehicle]
+Task 2: Scene Reasoning
+Predict the future behavior of the identified critical objects and explain how the identified critical objects or conditions affect the ego vehicle’s next 3-second trajectory.
+Task 3: Meta-Behavior Prediction
+Predict the ego vehicle’s future meta-driving behavior:
+- speed ∈ {keep, accelerate, decelerate, stop, other}
+- command ∈ {straight, yield, left_turn, right_turn, lane_follow, lane_change_left, lane_change_right, reverse, overtake, other}
+Task 4: Trajectory Prediction
+Predict the optimal 5-second future trajectory (5 waypoints, 1 s intervals).
+
+Input:
+- <image>: three front-view frames from left front, center front, right front cameras. 
+- High-level navigation command: GO_RIGHT
+- Historical ego state: Provided are the previous ego vehicle status recorded over the last 3.0 seconds (at 0.5-second intervals).(t-3.0s) [-6.66, -0.84], Acceleration: X 0.17, Y 0.04 m/s², Velocity: X 1.33, Y 0.36 m/s,; (t-2.5s) [-5.99, -0.66], Acceleration: X 0.15, Y 0.04 m/s², Velocity: X 1.63, Y 0.43 m/s,; (t-2.0s) [-5.18, -0.46], Acceleration: X 0.15, Y 0.03 m/s², Velocity: X 1.93, Y 0.49 m/s,; (t-1.5s) [-4.20, -0.24], Acceleration: X 0.20, Y -0.00 m/s², Velocity: X 2.28, Y 0.50 m/s,; (t-1.0s) [-3.05, -0.05], Acceleration: X 0.27, Y -0.03 m/s², Velocity: X 2.79, Y 0.46 m/s,; (t-0.5s) [-1.64, 0.06], Acceleration: X 0.22, Y -0.14 m/s², Velocity: X 3.26, Y 0.24 m/s,; (t+0.0s) [0.00, 0.00], Acceleration: X 0.20, Y -0.22 m/s², Velocity: X 3.46, Y 0.03 m/s,
+
+Output:
