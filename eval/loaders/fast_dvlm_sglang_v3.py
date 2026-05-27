@@ -171,12 +171,68 @@ def _build_input_ids(processor, image_path, prompt_text):
     return inputs.input_ids[0].tolist()
 
 
+def _inject_nav_into_template(template_ids, slot_info, tokenizer, mask_id, nav_command):
+    """Splice `"navigation_command": "<nav>", ` into the token stream right
+    BEFORE the `"future_meta_behavior":` sequence. This puts the nav target
+    in immediate bidir-attention context of the behavior masks, biasing the
+    lateral verb without conditional gating.
+
+    We search for the `future` token (id 21055 in Qwen2.5-VL tokenizer) and
+    insert just BEFORE the leading ` "` token. Falls back to no-op if the
+    marker isn't found.
+    """
+    enc = lambda s: tokenizer.encode(s, add_special_tokens=False)
+    # Find the position of the first long_w1 slot — behavior block starts there.
+    long_w1_pos = None
+    for local_pos, kind in slot_info:
+        if kind == "long_w1":
+            long_w1_pos = local_pos
+            break
+    if long_w1_pos is None:
+        return template_ids, slot_info
+
+    # Scan backwards from long_w1 for the token id of 'future' (21055 in
+    # Qwen2.5-VL). We need to splice BEFORE the leading ` "` token that
+    # precedes 'future' — that's the comma+space+quote separator.
+    target_future_str = enc("future")
+    if not target_future_str:
+        return template_ids, slot_info
+    future_tok = target_future_str[0]
+    future_pos = None
+    for i in range(long_w1_pos - 1, -1, -1):
+        if template_ids[i] == future_tok:
+            future_pos = i
+            break
+    if future_pos is None:
+        return template_ids, slot_info
+
+    # The token sequence at future_pos-1 should be ` "` (id 330). Insert right
+    # after that quote-opener so the new key starts cleanly.
+    insert_at = future_pos  # we'll insert immediately before 'future'
+    # Build the injection: `navigation_command": "<nav>", "` — note we
+    # already have ` "` from the original scaffold at future_pos-1, and we
+    # want to end with `, "` so the next `future` token continues cleanly.
+    inject = enc(f'navigation_command": "{nav_command}", "')
+    n_inject = len(inject)
+
+    new_ids = list(template_ids[:insert_at]) + list(inject) + list(template_ids[insert_at:])
+    new_slot = []
+    for local_pos, kind in slot_info:
+        if local_pos >= insert_at:
+            new_slot.append((local_pos + n_inject, kind))
+        else:
+            new_slot.append((local_pos, kind))
+    return new_ids, new_slot
+
+
 def generate(bundle, image_paths, question, max_new_tokens=None, temperature=0.0,
-              block_size=32):
+              block_size=32, nav_command=None):
     """V3 template-fill via SGLang dllm engine. Returns (text, latency_s).
 
-    The template is built from `template_v3.build_template_ids_v3` (the same
-    tokenizer used by the engine) and passed via `sampling_params.dllm_template_token_ids`.
+    `nav_command` (optional): when set, injects a literal
+    `"navigation_command": "<nav>"` key-value right BEFORE the behavior block
+    in the template. Biases the model's lateral verb choice toward the correct
+    nav-implied direction (without conditional gates).
     """
     import torch
     engine = bundle["engine"]
@@ -192,6 +248,11 @@ def generate(bundle, image_paths, question, max_new_tokens=None, temperature=0.0
 
     # Build V3 template (the same builder used by the transformers loader).
     template_ids_list, slot_info, _critical_pairs = build_template_ids_v3(tokenizer, mask_id)
+
+    if nav_command:
+        template_ids_list, slot_info = _inject_nav_into_template(
+            template_ids_list, slot_info, tokenizer, mask_id, nav_command,
+        )
 
     # Pad template to multiple of block_size — SGLang will chunk it into
     # block_size pieces.

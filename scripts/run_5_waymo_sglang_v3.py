@@ -56,7 +56,7 @@ def main():
         try:
             text, latency = loader.generate(
                 bundle, [_front_cam(sample)], build_prompt_v3(sample),
-                temperature=0.0,
+                temperature=0.0, nav_command=sample["navigation_command"],
             )
             print(f"  done ({latency:.2f}s, {len(text)} chars)")
         except Exception as e:
