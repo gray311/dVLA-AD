@@ -183,6 +183,8 @@ INPUT:
 - Multi-view images: front-left, front, front-right
 - Ego state: speed={speed:.1f} m/s, longitudinal acceleration={accel:.2f} m/s^2
 - Driver instruction: {instruction}
+- Lateral sign for trajectory (DETERMINISTIC, just copy this character at every lateral sign slot): {lateral_sign}
+- For your trajectory output, the lateral coordinate sign character is: {lateral_sign} {lateral_sign} {lateral_sign} {lateral_sign} {lateral_sign}
 - Past 3.0 s of ego positions at 0.5 s spacing (x forward, y left, meters):
   {history}
 
@@ -237,16 +239,46 @@ OUTPUT FORMAT REQUIREMENTS:
 7. trajectory: 10 future ego waypoints at 0.5 s spacing (t = 0.5, 1.0, ...
    5.0 s) — one line per waypoint in the form
        `<t>s: forward=<sign><tens><ones>.<frac>m, lateral=<sign><tens><ones>.<frac>m`
-   • `forward` is the ego-frame +x distance (meters, +forward / -reverse)
-   • `lateral` is the ego-frame +y offset (meters, +left / -right)
-   • each coordinate has a sign (`+`/`-`), two integer digits, ONE decimal
-   Example output (current speed {speed:.1f} m/s, going straight, no turn):
-       0.5s: forward=+00.{step_frac:01d}m, lateral=+00.0m
-       1.0s: forward=+0{step_int1:01d}.{step_frac:01d}m, lateral=+00.0m
+
+   COORDINATE FRAME (CRITICAL — read three times):
+   • `forward` = ego-frame x. POSITIVE means ahead of the car.
+   • `lateral` = ego-frame y. POSITIVE means to the LEFT of the car;
+     NEGATIVE means to the RIGHT of the car.
+
+   ************************************************************
+   YOUR CURRENT DRIVER INSTRUCTION IS: {instruction}
+   THE LATERAL SIGN YOU MUST EMIT AT EVERY WAYPOINT IS: {lateral_sign}
+   {lateral_sign} {lateral_sign} {lateral_sign} {lateral_sign} {lateral_sign}
+   {lateral_sign} {lateral_sign} {lateral_sign} {lateral_sign} {lateral_sign}
+
+   FILL THE 10 LATERAL SLOTS LIKE THIS (sign is FIXED to {lateral_sign},
+   only the digits vary):
+{lateral_example}
+   ************************************************************
+
+   FORWARD: at the current speed of {speed:.1f} m/s the forward distance
+   grows by ~{step_m:.2f} m per 0.5 s step. Worked example for
+   straight cruise at {speed:.1f} m/s:
+       0.5s: forward=+00.{step_frac:01d}m, lateral={lateral_sign}00.0m
+       1.0s: forward=+0{step_int1:01d}.{step_frac:01d}m, lateral={lateral_sign}00.0m
        ...
-   At {speed:.1f} m/s the forward distance grows by ~{step_m:.2f} m per
-   0.5 s step. Lateral offset stays near 0 when going straight; grows
-   negative on a right turn, positive on a left turn.
+
+   COMMON FAILURE MODE TO AVOID: emitting "+" for lateral when the driver
+   instruction is GO_RIGHT. If the instruction above contains the word
+   RIGHT then EVERY lateral sign must be "-".
+
+FINAL REMINDER BEFORE YOU FILL THE TEMPLATE:
+================================================================
+Driver instruction is {instruction}. The 10 trajectory-line lateral
+signs you emit MUST ALL BE "{lateral_sign}". Concretely, every one of
+the 10 mask positions immediately following "lateral=" must be the
+character "{lateral_sign}".
+
+If GO_RIGHT and you emit "+" anywhere in lateral, the output is WRONG.
+If GO_LEFT  and you emit "-" anywhere in lateral, the output is WRONG.
+If GO_STRAIGHT, all lateral signs are "+" and all lateral values are
+00.0m.
+================================================================
 
 TEMPLATE (fill the <|mdm_mask|> positions only — keep all other characters
 verbatim):
@@ -286,9 +318,37 @@ def build_prompt_v3(sample: dict) -> str:
     accel = ax  # longitudinal accel
     nav = sample["navigation_command"]
     step_int1, step_frac = _build_step_example(vx)
+    # nav-specific lateral sign + worked example. POSITIVE for GO_LEFT and
+    # GO_STRAIGHT; NEGATIVE for GO_RIGHT. The model defaults to "+" by token
+    # frequency, so we explicitly inject the expected sign as instruction.
+    lateral_sign = "-" if nav == "GO_RIGHT" else "+"
+    if nav == "GO_RIGHT":
+        lateral_example = "\n".join([
+            "       0.5s: lateral=-00.3m",
+            "       1.0s: lateral=-00.8m",
+            "       1.5s: lateral=-01.3m",
+            "       2.0s: lateral=-01.8m",
+            "       2.5s: lateral=-02.4m",
+        ])
+    elif nav == "GO_LEFT":
+        lateral_example = "\n".join([
+            "       0.5s: lateral=+00.3m",
+            "       1.0s: lateral=+00.8m",
+            "       1.5s: lateral=+01.3m",
+            "       2.0s: lateral=+01.8m",
+            "       2.5s: lateral=+02.4m",
+        ])
+    else:  # GO_STRAIGHT
+        lateral_example = "\n".join([
+            "       0.5s: lateral=+00.0m",
+            "       1.0s: lateral=+00.0m",
+            "       2.5s: lateral=+00.0m",
+            "       5.0s: lateral=+00.0m",
+        ])
     return PROMPT_V3.format(
         speed=speed, accel=accel, instruction=nav, history=hist_str,
         step_m=vx * TRAJECTORY_DT, step_int1=step_int1, step_frac=step_frac,
+        lateral_sign=lateral_sign, lateral_example=lateral_example,
         template=build_template_v3(),
     )
 
