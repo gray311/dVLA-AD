@@ -49,6 +49,13 @@ N_TRAJECTORY_TOKENS = N_WAYPOINTS * 8  # 8 mask slots per waypoint
 LONG_VERBS = ["speed up", "slow down", "keep speed", "stop now"]
 LAT_VERBS = ["keep lane", "turn left", "turn right", "change left", "change right"]
 
+# Scene-complexity tag: 1 mask token, gated to {"simple", "complex"}.
+# "complex" when the scene has many agents (multiple vehicles / pedestrians /
+# cyclists), an unfolding hazard (accident ahead, fire/smoke, blocked lane,
+# emergency vehicle in path), or any other condition that the model should
+# flag for downstream planning (e.g. budget more replanning compute).
+COMPLEXITY_LABELS = ["simple", "complex"]
+
 
 def build_template_v3() -> str:
     """JSON scaffold with <|mdm_mask|> at every slot the model should fill
@@ -67,6 +74,7 @@ def build_template_v3() -> str:
             "lateral": behavior_str,
         },
         "trajectory": MASK * N_TRAJECTORY_TOKENS,
+        "complexity": MASK,
     }
     return json.dumps(obj, separators=(", ", ": "), ensure_ascii=False)
 
@@ -140,6 +148,13 @@ def build_template_ids_v3(tokenizer, mask_id: int):
         slots.append((len(ids), "traj_ones"));  ids.append(mask_id)
         ids += enc('.')
         slots.append((len(ids), "traj_frac"));  ids.append(mask_id)
+    # Complexity tag: placed AFTER trajectory so it doesn't shift the
+    # behavior / trajectory mask chunk-boundaries that the model is
+    # sensitive to. The model judges complexity from the now-committed
+    # critical_objects + explanation context (via KV cache).
+    ids += enc('", "complexity": "')
+    slots.append((len(ids), "complexity"))
+    ids.append(mask_id)
     ids += enc('"}')
     return ids, slots, critical_pairs
 
@@ -164,14 +179,24 @@ OUTPUT FORMAT REQUIREMENTS:
      "black car", "green light", "orange cone", "overcast sky"). Keep it tight —
      do NOT introduce new JSON keys inside the slot.
 
-2. explanation: ~100 tokens describing the scene, salient objects, and how
+2. complexity: ONE token — exactly one of {{"simple", "complex"}}.
+   - "simple": low-traffic, no hazards, predictable surroundings (empty
+     residential street, clear highway, single lead car in calm flow).
+   - "complex": ANY of — multiple interacting agents (≥3 nearby vehicles
+     or pedestrians/cyclists in path), an unfolding hazard (accident
+     ahead, fire / smoke, blocked lane, debris, oncoming emergency
+     vehicle), construction zones with lane shifts, complex
+     intersections with mixed traffic, or anything that should signal
+     "give this frame extra planning attention".
+
+3. explanation: ~100 tokens describing the scene, salient objects, and how
    they shape your planned action. Write naturally — no fixed template, no
    numbered headings. A useful explanation usually grounds in the visible
    scene (road type, weather, what other agents are doing) and ties at least
    one observed agent or hazard to the longitudinal / lateral choice you
    emit below. Avoid generic filler.
 
-3. future_meta_behavior.longitudinal: format is exactly "verb_w1 verb_w2" — a
+5. future_meta_behavior.longitudinal: format is exactly "verb_w1 verb_w2" — a
    2-word phrase (one mask token per word), separated by a single space.
    - verb (2 words, pick ONE phrase) in {{"speed up", "slow down", "keep speed", "stop now"}}
    - Pick based on current speed AND scene context:
@@ -180,7 +205,7 @@ OUTPUT FORMAT REQUIREMENTS:
      * hazard / red light / vehicle slowing ahead → "slow down"
      * imminent collision / fire / pedestrian in path → "stop now"
 
-4. future_meta_behavior.lateral: same 2-word format.
+6. future_meta_behavior.lateral: same 2-word format.
    - verb (2 words, pick ONE phrase) in {{"keep lane", "turn left", "turn right", "change left", "change right"}}
    - The Driver instruction is a HIGH-LEVEL hint, not a hard rule. The
      lateral verb should usually follow it (`GO_LEFT`→`turn left`,
@@ -191,7 +216,7 @@ OUTPUT FORMAT REQUIREMENTS:
      verb that the EGO ACTUALLY NEEDS to execute instead. Local scene
      safety overrides the high-level nav.
 
-5. trajectory: 10 future ego waypoints at 0.5 s spacing (t = 0.5, 1.0, ... 5.0 s),
+7. trajectory: 10 future ego waypoints at 0.5 s spacing (t = 0.5, 1.0, ... 5.0 s),
    in meters in the ego frame (x = forward, y = left). Each coordinate has a
    sign (`+`/`-`), two integer digits, and ONE decimal place — e.g.
    "+05.0,+00.0;+10.0,+00.0;...+50.0,+00.0". 10 waypoints separated by `;`.

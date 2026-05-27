@@ -47,6 +47,8 @@ def _build_v3_position_gates(tokenizer, slot_info, template_len):
     long_w2_ids = sorted({first_tok(w) for w in ["up", "down", "speed", "now"] if first_tok(w) >= 0})
     lat_w1_ids = sorted({first_tok(w) for w in ["keep", "turn", "change"] if first_tok(w) >= 0})
     lat_w2_ids = sorted({first_tok(w) for w in ["lane", "left", "right"] if first_tok(w) >= 0})
+    # Complexity tag — single-token gate restricted to {"simple", "complex"}.
+    complexity_ids = sorted({first_tok(w) for w in ["simple", "complex"] if first_tok(w) >= 0})
 
     kind_to_allowed = {
         "traj_sign": sign_ids,
@@ -57,6 +59,7 @@ def _build_v3_position_gates(tokenizer, slot_info, template_len):
         "long_w2":   long_w2_ids,
         "lat_w1":    lat_w1_ids,
         "lat_w2":    lat_w2_ids,
+        "complexity": complexity_ids,
     }
 
     gates = [None] * template_len
