@@ -38,6 +38,9 @@ class HierarchyBlock(DllmAlgorithm):
         # Cross-chunk repetition counts for template-mode rep-penalty
         # positions. Reset on new request.
         self.rep_token_counts = None
+        # Forward counter for benchmarking. Increments every time
+        # model_runner.forward is called in template mode.
+        self.fwd_count = 0
 
     @staticmethod
     def _set_attention_type(model_runner: ModelRunner, attn_type: AttentionType):
@@ -109,6 +112,7 @@ class HierarchyBlock(DllmAlgorithm):
                 self.last_inherited_token = None
                 self.last_block_end_position = None
                 self.rep_token_counts = None
+                self.fwd_count = 0  # reset for benchmarking
 
         # Handle token inheritance for all-mask blocks (skip in template mode —
         # template scaffold at position 0 must stay intact; if position 0 IS a
@@ -171,6 +175,7 @@ class HierarchyBlock(DllmAlgorithm):
                     cur_mask = forward_batch.input_ids == self.mask_id
                     if not cur_mask.any():
                         break
+                    self.fwd_count += 1
                     out = model_runner.forward(forward_batch, pp_proxy_tensors=None)
                     logits_output, can_run_cuda_graph = (
                         out.logits_output, out.can_run_graph,
@@ -289,6 +294,7 @@ class HierarchyBlock(DllmAlgorithm):
                 # force-commit them in a final pass.
                 cur_mask = forward_batch.input_ids == self.mask_id
                 if cur_mask.any():
+                    self.fwd_count += 1
                     out = model_runner.forward(forward_batch, pp_proxy_tensors=None)
                     logits_output, can_run_cuda_graph = (
                         out.logits_output, out.can_run_graph,
@@ -312,6 +318,7 @@ class HierarchyBlock(DllmAlgorithm):
                     )
             else:
                 # All scaffold, no masks — single forward to advance KV cache.
+                self.fwd_count += 1
                 out = model_runner.forward(forward_batch, pp_proxy_tensors=None)
                 logits_output, can_run_cuda_graph = (
                     out.logits_output, out.can_run_graph,
@@ -330,6 +337,7 @@ class HierarchyBlock(DllmAlgorithm):
                 if sub_mask.sum().item() == 0:
                     break
 
+                self.fwd_count += 1
                 out = model_runner.forward(forward_batch, pp_proxy_tensors=None)
                 logits_output, can_run_cuda_graph = out.logits_output, out.can_run_graph
                 full_logits = logits_output.full_logits
@@ -452,6 +460,7 @@ class HierarchyBlock(DllmAlgorithm):
         # which would route through the CUDA Graph runner.
         self._set_attention_type(model_runner, AttentionType.DECODER)
 
+        self.fwd_count += 1
         logits_output = model_runner.forward_extend(forward_batch, pp_proxy_tensors=None)
         if isinstance(logits_output, tuple):
             logits_output = logits_output[0]
@@ -467,6 +476,13 @@ class HierarchyBlock(DllmAlgorithm):
         # Restore ENCODER_ONLY for next block's denoising iterations
         # so CUDA Graph (captured with ENCODER_ONLY) stays valid.
         self._set_attention_type(model_runner, AttentionType.ENCODER_ONLY)
+
+        # Debug print for benchmarking — counts ALL model_runner.forward calls
+        # since the last chunk boundary (printed per chunk).
+        if is_template_mode:
+            import os as _os
+            if _os.environ.get("DLLM_FWD_LOG"):
+                print(f"[HierarchyBlock] chunk done — fwd_count={self.fwd_count}", flush=True)
 
         return logits_output, forward_batch.input_ids[block_start:], can_run_cuda_graph
 

@@ -229,7 +229,7 @@ def _inject_nav_into_template(template_ids, slot_info, tokenizer, mask_id, nav_c
 
 
 def generate(bundle, image_paths, question, max_new_tokens=None, temperature=0.0,
-              block_size=32, nav_command=None):
+              block_size=32, nav_command=None, **kwargs):
     """V3 template-fill via SGLang dllm engine. Returns (text, latency_s).
 
     `nav_command` (optional): when set, injects a literal
@@ -299,10 +299,9 @@ def generate(bundle, image_paths, question, max_new_tokens=None, temperature=0.0
         # commits in one step pick distinct tokens.
         "dllm_template_rep_penalty_positions": rep_positions,
         "dllm_template_rep_penalty": 2.0,
-        # Fixed 4 steps per chunk (matches transformers loader). Total
-        # forwards ≈ 13 chunks × 4 = 52 (vs ~80-100 with the prior while
-        # loop). Halves SGLang template latency to match transformers path.
-        "dllm_template_steps_per_chunk": 4,
+        # Steps per chunk (caller override → default 4). 4 = fast (1.7-2s)
+        # but coarser ADE; 8 = closer to transformers loader's ADE at 2-3s.
+        "dllm_template_steps_per_chunk": kwargs.get("steps_per_chunk", 4),
     }
 
     torch.cuda.synchronize()
