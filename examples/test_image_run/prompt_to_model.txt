@@ -55,9 +55,16 @@ OUTPUT FORMAT REQUIREMENTS:
      verb that the EGO ACTUALLY NEEDS to execute instead. Local scene
      safety overrides the high-level nav.
 
-7. trajectory: 10 future ego waypoints at 0.5 s spacing (t = 0.5, 1.0, ... 5.0 s),
-   in meters in the ego frame (x = forward, y = left). Each coordinate has a
-   sign (`+`/`-`), two integer digits, and ONE decimal place — e.g.
-   "+05.0,+00.0;+10.0,+00.0;...+50.0,+00.0". 10 waypoints separated by `;`.
-   At the current speed of 15.0 m/s going straight, x grows by about
-   7.50 m per step.
+7. trajectory: 10 future ego waypoints at 0.5 s spacing (t = 0.5, 1.0, ...
+   5.0 s) — one line per waypoint in the form
+       `<t>s: forward=<sign><tens><ones>.<frac>m, lateral=<sign><tens><ones>.<frac>m`
+   • `forward` is the ego-frame +x distance (meters, +forward / -reverse)
+   • `lateral` is the ego-frame +y offset (meters, +left / -right)
+   • each coordinate has a sign (`+`/`-`), two integer digits, ONE decimal
+   Example output (current speed 15.0 m/s, going straight, no turn):
+       0.5s: forward=+00.5m, lateral=+00.0m
+       1.0s: forward=+05.5m, lateral=+00.0m
+       ...
+   At 15.0 m/s the forward distance grows by ~7.50 m per
+   0.5 s step. Lateral offset stays near 0 when going straight; grows
+   negative on a right turn, positive on a left turn.

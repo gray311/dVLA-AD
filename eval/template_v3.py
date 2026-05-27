@@ -66,6 +66,17 @@ def build_template_v3() -> str:
     co = {cat: MASK * N_CRITICAL_TOKENS for cat in CRITICAL_CATEGORIES}
     # Behavior: 2 mask tokens (verb only) with fixed scaffold space between them.
     behavior_str = f"{MASK} {MASK}"
+    # Trajectory: semantic per-waypoint lines (the actual token layout in
+    # build_template_ids_v3 uses sign+digits gates; this string is just for
+    # display in the human-readable TEMPLATE block at the tail of the prompt).
+    traj_lines = []
+    for w in range(N_WAYPOINTS):
+        t = (w + 1) * TRAJECTORY_DT
+        # 4 masks (sign,tens,ones,frac) for forward and another 4 for lateral.
+        # The "." that splits ones from frac is scaffold, kept as a literal `.`.
+        slot = MASK * 3 + "." + MASK
+        traj_lines.append(f"{t:.1f}s: forward={slot}m, lateral={slot}m")
+    traj_str = "\n".join(traj_lines)
     obj = {
         "critical_objects": co,
         "complexity": MASK,
@@ -74,7 +85,7 @@ def build_template_v3() -> str:
             "longitudinal": behavior_str,
             "lateral": behavior_str,
         },
-        "trajectory": MASK * N_TRAJECTORY_TOKENS,
+        "trajectory": traj_str,
     }
     return json.dumps(obj, separators=(", ", ": "), ensure_ascii=False)
 
@@ -135,28 +146,33 @@ def build_template_ids_v3(tokenizer, mask_id: int):
     ids += enc(' ')
     slots.append((len(ids), "lat_w2")); ids.append(mask_id)
     ids += enc('"}, "trajectory": "')
-    # Structured trajectory: 20 waypoints, each as `<sign><tens><ones>.<frac>,<sign><tens><ones>.<frac>`
-    # separated by `;`. Mask slot kinds carry constraint info:
-    #   traj_sign      → {+, -}
-    #   traj_tens      → digit 0-9
-    #   traj_ones      → digit 0-9
-    #   traj_frac      → digit 0-9
+    # Semantic trajectory: 10 waypoints, each in the form
+    #   `<t>s: forward=<sign><tens><ones>.<frac>m, lateral=<sign><tens><ones>.<frac>m`
+    # newline-separated. Per-position gates:
+    #   traj_sign → {+, -}
+    #   traj_tens / traj_ones / traj_frac → digit 0-9
+    # The semantic labels (`forward=`, `m`, `lateral=`, `<t>s:`) are SCAFFOLD
+    # — committed before diffusion, so the mask positions see them as
+    # context. Empirically this improves model grounding vs the older
+    # compact `+XX.X,+YY.Y;...` format.
     for w in range(N_WAYPOINTS):
+        t = (w + 1) * TRAJECTORY_DT  # 0.5, 1.0, ..., 5.0
         if w > 0:
-            ids += enc(';')
-        # x = <sign><tens><ones>.<frac>
+            ids += enc('\n')
+        # Scaffold: e.g. "0.5s: forward="
+        ids += enc(f'{t:.1f}s: forward=')
         slots.append((len(ids), "traj_sign"));  ids.append(mask_id)
         slots.append((len(ids), "traj_tens"));  ids.append(mask_id)
         slots.append((len(ids), "traj_ones"));  ids.append(mask_id)
         ids += enc('.')
         slots.append((len(ids), "traj_frac"));  ids.append(mask_id)
-        ids += enc(',')
-        # y = <sign><tens><ones>.<frac>
+        ids += enc('m, lateral=')
         slots.append((len(ids), "traj_sign"));  ids.append(mask_id)
         slots.append((len(ids), "traj_tens"));  ids.append(mask_id)
         slots.append((len(ids), "traj_ones"));  ids.append(mask_id)
         ids += enc('.')
         slots.append((len(ids), "traj_frac"));  ids.append(mask_id)
+        ids += enc('m')
     ids += enc('"}')
     return ids, slots, critical_pairs
 
@@ -218,18 +234,34 @@ OUTPUT FORMAT REQUIREMENTS:
      verb that the EGO ACTUALLY NEEDS to execute instead. Local scene
      safety overrides the high-level nav.
 
-7. trajectory: 10 future ego waypoints at 0.5 s spacing (t = 0.5, 1.0, ... 5.0 s),
-   in meters in the ego frame (x = forward, y = left). Each coordinate has a
-   sign (`+`/`-`), two integer digits, and ONE decimal place — e.g.
-   "+05.0,+00.0;+10.0,+00.0;...+50.0,+00.0". 10 waypoints separated by `;`.
-   At the current speed of {speed:.1f} m/s going straight, x grows by about
-   {step_m:.2f} m per step.
+7. trajectory: 10 future ego waypoints at 0.5 s spacing (t = 0.5, 1.0, ...
+   5.0 s) — one line per waypoint in the form
+       `<t>s: forward=<sign><tens><ones>.<frac>m, lateral=<sign><tens><ones>.<frac>m`
+   • `forward` is the ego-frame +x distance (meters, +forward / -reverse)
+   • `lateral` is the ego-frame +y offset (meters, +left / -right)
+   • each coordinate has a sign (`+`/`-`), two integer digits, ONE decimal
+   Example output (current speed {speed:.1f} m/s, going straight, no turn):
+       0.5s: forward=+00.{step_frac:01d}m, lateral=+00.0m
+       1.0s: forward=+0{step_int1:01d}.{step_frac:01d}m, lateral=+00.0m
+       ...
+   At {speed:.1f} m/s the forward distance grows by ~{step_m:.2f} m per
+   0.5 s step. Lateral offset stays near 0 when going straight; grows
+   negative on a right turn, positive on a left turn.
 
 TEMPLATE (fill the <|mdm_mask|> positions only — keep all other characters
 verbatim):
 
 {template}
 """
+
+
+def _build_step_example(vx: float) -> tuple[int, int]:
+    """Return (int_part_at_1s, frac_part_at_0.5s) for the prompt example."""
+    step_m_05 = vx * 0.5  # forward distance per 0.5 s step
+    step_m_10 = vx * 1.0  # forward distance at t=1.0 s
+    frac_at_05 = int(round((step_m_05 - int(step_m_05)) * 10)) % 10
+    int_at_10 = int(step_m_10) % 10
+    return int_at_10, frac_at_05
 
 
 def build_prompt_v3(sample: dict) -> str:
@@ -253,14 +285,23 @@ def build_prompt_v3(sample: dict) -> str:
     ax, ay = sample["acceleration"][-1]
     accel = ax  # longitudinal accel
     nav = sample["navigation_command"]
+    step_int1, step_frac = _build_step_example(vx)
     return PROMPT_V3.format(
         speed=speed, accel=accel, instruction=nav, history=hist_str,
-        step_m=vx * TRAJECTORY_DT, template=build_template_v3(),
+        step_m=vx * TRAJECTORY_DT, step_int1=step_int1, step_frac=step_frac,
+        template=build_template_v3(),
     )
 
 
 # --- parsing the filled template ---
 
+# Semantic trajectory: each waypoint is
+#   `<t>s: forward=<x>m, lateral=<y>m`
+# (newlines or not, but `forward=...m` is the reliable anchor.)
+_FORWARD_RE = re.compile(r"forward\s*=\s*([+\-]?\d+(?:\.\d+)?)\s*m", re.I)
+_LATERAL_RE = re.compile(r"lateral\s*=\s*([+\-]?\d+(?:\.\d+)?)\s*m", re.I)
+# Fallback for the OLD compact `+XX.X,+YY.Y;...` format (in case any caller
+# still uses it).
 _PAIR_RE = re.compile(
     r"([+\-]?\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?)\s*[,\s]\s*"
     r"([+\-]?\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?)"
@@ -291,12 +332,22 @@ def _extract_trajectory_field(filled_text: str) -> str:
 
 
 def parse_filled(filled_text: str) -> List[Tuple[float, float]]:
-    """Extract up to 20 (x, y) pairs from the filled trajectory field."""
+    """Extract up to N_WAYPOINTS (x, y) pairs from the filled trajectory field.
+    Tries the semantic `forward=...m, lateral=...m` layout first, then falls
+    back to the legacy compact `+XX.X,+YY.Y;...` form.
+    """
     tr = _extract_trajectory_field(filled_text)
     if not tr:
         tr = filled_text  # last-ditch: scan the whole output
     # Strip mask tokens and pad placeholders
     tr = tr.replace(MASK, " ").replace("<|mdm_mask|>", " ").replace("|MASK|", " ")
     tr = tr.replace("pad", " ")
+    # Preferred: semantic format
+    forwards = [float(x) for x in _FORWARD_RE.findall(tr)]
+    laterals = [float(y) for y in _LATERAL_RE.findall(tr)]
+    if forwards and laterals:
+        n = min(len(forwards), len(laterals), N_WAYPOINTS)
+        return list(zip(forwards[:n], laterals[:n]))
+    # Fallback: legacy compact format
     pairs = _PAIR_RE.findall(tr)
-    return [(float(x), float(y)) for x, y in pairs][:20]
+    return [(float(x), float(y)) for x, y in pairs][:N_WAYPOINTS]
