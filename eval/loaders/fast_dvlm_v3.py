@@ -122,6 +122,7 @@ def _build_v3_vocab_gates(tokenizer):
     long_w2_words = ["up", "down", "speed", "now"]
     lat_w1_words = ["keep", "turn", "change"]
     lat_w2_words = ["lane", "left", "right"]
+    complexity_words = ["simple", "complex"]
 
     return {
         "traj_sign":  sign_ids,
@@ -132,6 +133,7 @@ def _build_v3_vocab_gates(tokenizer):
         "long_w2":    no_space_first_toks(long_w2_words),
         "lat_w1":     no_space_first_toks(lat_w1_words),
         "lat_w2":     no_space_first_toks(lat_w2_words),
+        "complexity": no_space_first_toks(complexity_words),
     }
 
 
