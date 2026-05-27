@@ -1,46 +1,46 @@
 {
-  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"none car\", \"pedestrian\": \"none person\", \"cyclist\": \" cyclist cyclist\", \"construction\": \"none zone\", \"traffic_element\": \"none light\", \"weather_condition\": \"sunny\", \"road_hazard\": \"none obstacle\", \"emergency_vehicle\": \"none vehicle\", \"animal\": \"none animal\", \"special_vehicle\": \"none vehicle\", \"conflicting_vehicle\": \"none car\", \"door_opening_vehicle\": \"none vehicle\"}, \"complexity\": \"simple\", \"explanation\": \"The scene shows a city street with a modern glass building on the left. The road is empty, no there are of pedestrians or vehicles in traffic lights There and weather zone visible clear sky sunny conditions no is any construction hazard such ancoming vehicle car nearby pedestrian cyclist seen visible emergency obstacle or as not other objects elements hazards hazardous path present safety futurecurrent the driving instruction driver go keep turn lane right to maintain current safe cruising speed avoid  longitudinal lateral behavior trajectory 0.5s: forward=+0\", \"navigation_command\": \"GO_RIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"keep speed\", \"lateral\": \"turn right\"}, \"trajectory\": \"0.5s: forward=+01.5m, lateral=+00.3m\n1.0s: forward=+02.4m, lateral=+00.5m\n1.5s: forward=+03.5m, lateral=+00.7m\n2.0s: forward=+04.6m, lateral=+00.9m\n2.5s: forward=+06.0m, lateral=+01.1m\n3.0s: forward=+08.0m, lateral=+01.3m\n3.5s: forward=+10.2m, lateral=+01.5m\n4.0s: forward=+12.4m, lateral=+01.7m\n4.5s: forward=+14.5m, lateral=+01.9m\n5.0s: forward=+16.7m, lateral=+01.1m\"}",
+  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"none car\", \"pedestrian\": \"none person\", \"cyclist\": \" cyclist cyclist\", \"construction\": \"none construction\", \"traffic_element\": \"none light\", \"weather_condition\": \"sunny\", \"road_hazard\": \"none hazard\", \"emergency_vehicle\": \"none vehicle\", \"animal\": \"none animal\", \"special_vehicle\": \"none vehicle\", \"conflicting_vehicle\": \"none vehicle\", \"door_opening_vehicle\": \"none vehicle\"}, \"complexity\": \"simple\", \"explanation\": \"The scene is a typical city street with a few buildings on the left. and no road in The are is clear and there are no pedestrians nearby traffic, or vehicles car There is not visible pedestrian, cyclistist or any other vehicle hazardscoming hazardous road of hazard emergency an safety frame behavior. on the current go Driver driver instructions GOGODriver instruction to turn that lane as the driver's right to driving at speed of keeping speed within path trajectory., lateral 1.50: forward=+0\", \"navigation_command\": \"GO_RIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"keep up\", \"lateral\": \"turn left\"}, \"trajectory\": \"0.5s: forward=+01.5m, lateral=+00.3m\n1.0s: forward=+03.2m, lateral=+00.5m\n1.5s: forward=+04.8m, lateral=+00.3m\n2.0s: forward=+06.4m, lateral=+00.5m\n2.5s: forward=+06.4m, lateral=+00.3m\n3.0s: forward=+08.1m, lateral=+00.3m\n3.5s: forward=+10.8m, lateral=+00.3m\n4.0s: forward=+00.4m, lateral=+00.3m\n4.5s: forward=+00.3m, lateral=+00.3m\n5.0s: forward=+00.3m, lateral=+00.3m\"}",
   "predicted_waypoints_10": [
     [
       1.5,
       0.3
     ],
     [
-      2.4,
+      3.2,
       0.5
     ],
     [
-      3.5,
-      0.7
+      4.8,
+      0.3
     ],
     [
-      4.6,
-      0.9
+      6.4,
+      0.5
     ],
     [
-      6.0,
-      1.1
+      6.4,
+      0.3
     ],
     [
-      8.0,
-      1.3
+      8.1,
+      0.3
     ],
     [
-      10.2,
-      1.5
+      10.8,
+      0.3
     ],
     [
-      12.4,
-      1.7
+      0.4,
+      0.3
     ],
     [
-      14.5,
-      1.9
+      0.3,
+      0.3
     ],
     [
-      16.7,
-      1.1
+      0.3,
+      0.3
     ]
   ],
-  "ade_first5_m": 2.0688562455424444
+  "ade_first5_m": 2.4365943291438796
 }

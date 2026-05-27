@@ -1,28 +1,32 @@
 {
-  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"none car\", \"pedestrian\": \"none person\", \"cyclist\": \" cyclist None\", \"construction\": \"none zone\", \"traffic_element\": \"none light\", \"weather_condition\": \"sunny\", \"road_hazard\": \"none obstacle\", \"emergency_vehicle\": \"none car\", \"animal\": \"none animal\", \"special_vehicle\": \"none vehicle\", \"conflicting_vehicle\": \"none car\", \"door_opening_vehicle\": \"none car\"}, \"complexity\": \"simple\", \"explanation\": \"The scene is a residential street with palm clear, and no traffic. few cars are visible in the, distance but there road ahead not signs or of the car. The sky or pedestrian any other hazards such objects seen as on vehicle hazard like vehicles in pedestrianscoming vehicles emergency vehicle from construction zone blocked obstacles intersection hazardous future behavior: keep left lane change at maintaining current speed driving that to maintain safe course going right straight straight without turninging, lateral_sign = + 105m forward=_str0\", \"navigation_command\": \"GO_STRAIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"keep speed\", \"lateral\": \"keep left\"}, \"trajectory\": \"0.5s: forward=+03.7m, lateral=+00.0m\n1.0s: forward=+07.5m, lateral=+00.0m\n1.5s: forward=+18.3m, lateral=+00.0m\n2.0s: forward=+37.1m, lateral=+00.0m\n2.5s: forward=+37.8m, lateral=+00.0m\n3.0s: forward=+57.6m, lateral=+00.0m\n3.5s: forward=+77.3m, lateral=+00.0m\n4.0s: forward=+77.3m, lateral=+00.0m\n4.5s: forward=+77.8m, lateral=+00.0m\n5.0s: forward=+77.8m, lateral=+00.0m\"}",
+  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"none car\", \"pedestrian\": \"none person\", \"cyclist\": \" cyclist road\", \"construction\": \"none zone\", \"traffic_element\": \"over sky\", \"weather_condition\": \"sunny\", \"road_hazard\": \"none road\", \"emergency_vehicle\": \"none car\", \"animal\": \"none animal\", \"special_vehicle\": \"none vehicle\", \"conflicting_vehicle\": \"none car\", \"door_opening_vehicle\": \"none car\"}, \"complexity\": \"simple\", \"explanation\": \"The scene is a residential street with a palm, no traffic wall and. the sky is driving straight the  speed car of road to there are forward next ahead. lane left in front path right going lateral turn on now. The future up behavior: long go up, slow down keep stop speed lateral keep lane left change right now. trajectory current forwardforward= 10052m, lateral=3468m,ffuture waypoints: forforward+1097m m\", \"navigation_command\": \"GO_STRAIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"speed up\", \"lateral\": \"keep lane\"}, \"trajectory\": \"0.5s: forward=+10.7m, lateral=+00.0m\n1.0s: forward=+27.5m, lateral=+00.0m\n1.5s: forward=+47.3m, lateral=+00.0m\n2.0s: forward=+67.1m, lateral=+00.0m\n2.5s: forward=+87.9m, lateral=+00.0m\n3.0s: forward=+10.7m, lateral=+00.0m\n3.5s: forward=+27.5m, lateral=+00.0m\n4.0s: forward=+77.3m, lateral=+00.0m\n4.5s: forward=+87.1m, lateral=+00.0m\n5.0s: forward=+10.9m, lateral=+00.0m\"}",
   "predicted_waypoints_10": [
     [
-      3.7,
+      10.7,
       0.0
     ],
     [
-      7.5,
+      27.5,
       0.0
     ],
     [
-      18.3,
+      47.3,
       0.0
     ],
     [
-      37.1,
+      67.1,
       0.0
     ],
     [
-      37.8,
+      87.9,
       0.0
     ],
     [
-      57.6,
+      10.7,
+      0.0
+    ],
+    [
+      27.5,
       0.0
     ],
     [
@@ -30,17 +34,13 @@
       0.0
     ],
     [
-      77.3,
+      87.1,
       0.0
     ],
     [
-      77.8,
-      0.0
-    ],
-    [
-      77.8,
+      10.9,
       0.0
     ]
   ],
-  "ade_first5_m": 14.451666549298796
+  "ade_first5_m": 41.65773928879831
 }

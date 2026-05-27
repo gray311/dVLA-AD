@@ -1,5 +1,5 @@
 {
-  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"white car\", \"pedestrian\": \"none found\", \"cyclist\": \" found here\", \"construction\": \"none seen\", \"traffic_element\": \"power lines\", \"weather_condition\": \"overcast\", \"road_hazard\": \"none detected\", \"emergency_vehicle\": \"not seen\", \"animal\": \"none visible\", \"special_vehicle\": \"no bus\", \"conflicting_vehicle\": \"no car\", \"door_opening_vehicle\": \"no seen\"}, \"complexity\": \"simple\", \"explanation\": \"The scene shows a quiet residential street with palm houses on power trees. and over lines traffic There no hazards vehicles pedestrians or, thecoming emergency vehicle visible road hazard are detected seen This current behavior align by the driver The instruction is clear: go right to GO_RIGHTcurrent current speed of is  m driving car keep cruising AND path frame ahead lane safe not future now plan down for lateral up turn change left stay trajectory forward005s: forward=1.73m, lateral=-3m\", \"navigation_command\": \"GO_RIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"keep speed\", \"lateral\": \"keep lane\"}, \"trajectory\": \"0.5s: forward=+01.5m, lateral=+00.3m\n1.0s: forward=+03.4m, lateral=+00.5m\n1.5s: forward=+05.1m, lateral=+00.8m\n2.0s: forward=+06.9m, lateral=+00.5m\n2.5s: forward=+08.6m, lateral=+00.3m\n3.0s: forward=+10.3m, lateral=+00.3m\n3.5s: forward=+12.0m, lateral=+00.3m\n4.0s: forward=+14.7m, lateral=+00.3m\n4.5s: forward=+16.4m, lateral=+00.3m\n5.0s: forward=+18.1m, lateral=+00.3m\"}",
+  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"white car\", \"pedestrian\": \"none found\", \"cyclist\": \" found here\", \"construction\": \"none found\", \"traffic_element\": \"clear light\", \"weather_condition\": \"overcast\", \"road_hazard\": \"none detected\", \"emergency_vehicle\": \"not seen\", \"animal\": \"none seen\", \"special_vehicle\": \"no bus\", \"conflicting_vehicle\": \"no truck\", \"door_opening_vehicle\": \"no car\"}, \"complexity\": \"simple\", \"explanation\": \"The scene is a typical suburban residential street with no immediate hazards. or vehicles approaching the The road, appears there are few cars and traffic trees white of the car on visible in front distance sky also has a clear light ahead over weather conditions indicating no adverse issuescoming to I driver's TheDriver Driver instructions driving lane right left turnFuturefuture future meta future longitudinal behavior GO_RIGHTward:  speed up3.0 m keep12.50s lateral behavior:  keep --08m\", \"navigation_command\": \"GO_RIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"speed up\", \"lateral\": \"keep left\"}, \"trajectory\": \"0.5s: forward=+01.5m, lateral=+00.3m\n1.0s: forward=+03.4m, lateral=+00.5m\n1.5s: forward=+05.1m, lateral=+00.7m\n2.0s: forward=+06.9m, lateral=+00.9m\n2.5s: forward=+08.6m, lateral=+01.1m\n3.0s: forward=+10.3m, lateral=+01.3m\n3.5s: forward=+12.0m, lateral=+01.5m\n4.0s: forward=+14.7m, lateral=+01.7m\n4.5s: forward=+16.4m, lateral=+01.9m\n5.0s: forward=+18.1m, lateral=+02.1m\"}",
   "predicted_waypoints_10": [
     [
       1.5,
@@ -11,36 +11,36 @@
     ],
     [
       5.1,
-      0.8
+      0.7
     ],
     [
       6.9,
-      0.5
+      0.9
     ],
     [
       8.6,
-      0.3
+      1.1
     ],
     [
       10.3,
-      0.3
+      1.3
     ],
     [
       12.0,
-      0.3
+      1.5
     ],
     [
       14.7,
-      0.3
+      1.7
     ],
     [
       16.4,
-      0.3
+      1.9
     ],
     [
       18.1,
-      0.3
+      2.1
     ]
   ],
-  "ade_first5_m": 2.7282448422932966
+  "ade_first5_m": 2.834922056438965
 }

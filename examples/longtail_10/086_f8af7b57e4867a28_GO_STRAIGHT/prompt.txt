@@ -4,8 +4,8 @@ INPUT:
 - Multi-view images: front-left, front, front-right
 - Ego state: speed=4.0 m/s, longitudinal acceleration=0.24 m/s^2
 - Driver instruction: GO_STRAIGHT
-- Past 3.0 s of ego positions at 0.5 s spacing (x forward, y left, meters):
-  (-6.93, -6.50); (-6.84, -3.70); (-4.49, -0.65); (0.00, 0.00)
+- Past 1.5 s of ego positions at 0.1 s spacing (x forward, y left, meters):
+  (-6.93, -6.50); (-7.01, -6.07); (-7.07, -5.56); (-7.07, -4.98); (-7.00, -4.36); (-6.84, -3.70); (-6.58, -3.03); (-6.22, -2.35); (-5.76, -1.72); (-5.18, -1.15); (-4.49, -0.65); (-3.73, -0.26); (-2.88, 0.00); (-1.97, 0.14); (-1.00, 0.13); (0.00, 0.00)
 
 TASK:
 Fill in the masked positions in the following JSON template.

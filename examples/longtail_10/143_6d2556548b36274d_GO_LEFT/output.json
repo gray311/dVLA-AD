@@ -1,5 +1,5 @@
 {
-  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"silver car\", \"pedestrian\": \"none found\", \"cyclist\": \" found found\", \"construction\": \"none found\", \"traffic_element\": \"orange cone\", \"weather_condition\": \"scast\", \"road_hazard\": \"none found\", \"emergency_vehicle\": \"none found\", \"animal\": \"none found\", \"special_vehicle\": \"none found\", \"conflicting_vehicle\": \"none found\", \"door_opening_vehicle\": \"none found\"}, \"complexity\": \"simple\", \"explanation\": \"The scene shows a street with a trees on and buildings, with a silver car in the. left. of no is cone traffic light road cones are there side found not vehicles no animals pedestrians seen or vehicle emergency notcoming nor animal hazard is coming safety future 0 s5 is safe driver instruction turn go lane speed to now keep down up stop : forward lateral sign +sign0+m m, lateral=123 mm, lateral=4s: forward=68 straightlane\", \"navigation_command\": \"GO_LEFT\", \"future_meta_behavior\": {\"longitudinal\": \"keep speed\", \"lateral\": \"turn left\"}, \"trajectory\": \"0.5s: forward=+04.5m, lateral=+00.3m\n1.0s: forward=+08.4m, lateral=+00.1m\n1.5s: forward=+12.6m, lateral=+00.8m\n2.0s: forward=+16.8m, lateral=+00.5m\n2.5s: forward=+20.0m, lateral=+00.3m\n3.0s: forward=+24.2m, lateral=+00.3m\n3.5s: forward=+28.4m, lateral=+00.3m\n4.0s: forward=+32.6m, lateral=+00.3m\n4.5s: forward=+36.8m, lateral=+00.3m\n5.0s: forward=+41.0m, lateral=+00.3m\"}",
+  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"silver car\", \"pedestrian\": \"none found\", \"cyclist\": \" found found\", \"construction\": \"none found\", \"traffic_element\": \"orange cone\", \"weather_condition\": \"scast\", \"road_hazard\": \"none found\", \"emergency_vehicle\": \"none found\", \"animal\": \"none found\", \"special_vehicle\": \"none found\", \"conflicting_vehicle\": \"none found\", \"door_opening_vehicle\": \"none found\"}, \"complexity\": \"simple\", \"explanation\": \"The scene shows a street with a few road and some trees, with cars parked on the. no objects or pedestrians hazards visible seen in hazard ahead. The driver is driving car at low traffic and following the instructions left turn instruction to go left car current future behavior trajectory lateral speed up down keep will 8 m0 s forward 251: lateral=+4m3m,l608:+7m8l,901:++1ml,125\", \"navigation_command\": \"GO_LEFT\", \"future_meta_behavior\": {\"longitudinal\": \"speed up\", \"lateral\": \"turn left\"}, \"trajectory\": \"0.5s: forward=+04.5m, lateral=+00.3m\n1.0s: forward=+08.4m, lateral=+00.5m\n1.5s: forward=+12.6m, lateral=+00.8m\n2.0s: forward=+16.8m, lateral=+01.1m\n2.5s: forward=+20.0m, lateral=+01.4m\n3.0s: forward=+24.2m, lateral=+01.5m\n3.5s: forward=+28.4m, lateral=+01.8m\n4.0s: forward=+32.6m, lateral=+02.1m\n4.5s: forward=+36.8m, lateral=+02.4m\n5.0s: forward=+41.0m, lateral=+02.4m\"}",
   "predicted_waypoints_10": [
     [
       4.5,
@@ -7,7 +7,7 @@
     ],
     [
       8.4,
-      0.1
+      0.5
     ],
     [
       12.6,
@@ -15,32 +15,32 @@
     ],
     [
       16.8,
-      0.5
+      1.1
     ],
     [
       20.0,
-      0.3
+      1.4
     ],
     [
       24.2,
-      0.3
+      1.5
     ],
     [
       28.4,
-      0.3
+      1.8
     ],
     [
       32.6,
-      0.3
+      2.1
     ],
     [
       36.8,
-      0.3
+      2.4
     ],
     [
       41.0,
-      0.3
+      2.4
     ]
   ],
-  "ade_first5_m": 6.121868522985684
+  "ade_first5_m": 6.129349492640071
 }
