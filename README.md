@@ -1,34 +1,35 @@
 # dVLA-AD
 
-Fast-dVLM zero-shot driving CoT with V3 template fill, served via a modified
-NVlabs Fast-dLLM SGLang fork.
+Zero-shot driving CoT (perception → complexity → explanation → meta-behavior
+→ trajectory) with **Fast-dVLM-3B** served via a modified **NVlabs SGLang
+fork** that supports template-fill of structured JSON responses.
 
-## What's in here
+## Repo layout
 
 ```
 eval/
-  template_v3.py                     V3 schema: 12 critical_objects × 2 mask,
-                                     100 explanation mask, 2+2 behavior verb
-                                     mask, 10wp × 8 trajectory mask
+  template_v3.py                     V3 schema + prompt builder + parser
   loaders/
-    fast_dvlm_v3.py                  transformers path (block-causal fill
-                                     written from scratch, ~1.3s/sample)
-    fast_dvlm_sglang.py              SGLang free-form (no template, JSON
-                                     generated as continuation, ~1.2s)
-    fast_dvlm_sglang_v3.py           SGLang template-fill (uses modified
-                                     SGLang fork APIs, ~2.0s)
+    fast_dvlm_sglang_v3.py           production loader (SGLang template-fill)
+    fast_dvlm_v3.py                  transformers baseline (block-causal)
+    fast_dvlm_sglang.py              free-form baseline (no template)
+    dvlm_ad.py                       dVLM-AD_waymo (finetuned LLaDA-V) loader
 
 scripts/
-  smoke_sglang_v3.py                 1-sample sanity check
-  run_5_waymo_sglang_v3.py           5-sample Waymo eval (mdm|spec)
-  run_5_waymo_sglang.py              free-form baseline runner
-  run_5_waymo_fastdvlm.py            transformers baseline runner
-  write_template_vs_freeform_report.py    quality + latency comparison
+  run_10_waymo_compare.py            10-sample SGLang vs dVLM-AD runner
+  run_n_waymo_ade.py                 N-sample ADE sweep
+  write_10_compare_report.py         renders the comparison.md report
+  save_longtail_examples.py          dumps SGLang outputs for 10 longtail samples
+  save_longtail_dvlm_ad.py           dumps dVLM-AD outputs for same 10 samples
+  save_test_image_to_longtail.py     dumps SGLang + dVLM-AD on the burning-car image
 
-third_party/sglang/                  NVlabs vendored SGLang fork
-                                     (modified — see "Modifications" below)
+third_party/sglang/                  vendored SGLang fork with template-fill APIs
 
-results/waymo_5_compare/             benchmark outputs and reports
+examples/longtail_10/                10 longtail Waymo samples + test_image_burning_car/
+                                       — each has prompts, templates, outputs,
+                                       and images for both SGLang and dVLM-AD
+
+results/waymo_10_compare/            comparison.md, ade_comparison.md, raw JSONs
 ```
 
 ## Setup
@@ -37,86 +38,83 @@ results/waymo_5_compare/             benchmark outputs and reports
 # In an env with torch 2.9.x and Qwen2.5-VL deps:
 pip install -e third_party/sglang/python --no-deps
 
-# Sanity check:
-python scripts/smoke_sglang_v3.py mdm
+# 10-sample SGLang vs dVLM-AD comparison
+python scripts/run_10_waymo_compare.py sglang
+python scripts/run_10_waymo_compare.py ad
+python scripts/write_10_compare_report.py
+```
 
-# Full 5-sample run:
-python scripts/run_5_waymo_sglang_v3.py mdm
+## V3 schema
+
+```
+{"critical_objects": {12 categories × 2 mask},   <- detect objects
+ "complexity": "<simple|complex>",               <- 1-mask judgement
+ "explanation": "<100 mask>",                    <- ~100 token CoT
+ "navigation_command": "<runtime-inject>",       <- nav hint
+ "future_meta_behavior": {                       <- 2-word verbs
+   "longitudinal": "<m> <m>",                       speed up / slow down / keep speed / stop now
+   "lateral":      "<m> <m>"                        turn left / turn right / keep lane / change left|right
+ },
+ "trajectory": "<semantic per-waypoint lines>"   <- 10 wp × 0.5s
+}
+```
+
+Trajectory format (each waypoint one line):
+
+```
+0.5s: forward=+05.0m, lateral=+00.0m
+1.0s: forward=+10.0m, lateral=+00.0m
+...
+5.0s: forward=+50.0m, lateral=+00.0m
 ```
 
 ## SGLang fork modifications
 
-The vendored SGLang fork adds three new `SamplingParams` fields for
-template-fill of structured outputs:
+Adds three new `SamplingParams` fields for structured-response template-fill:
 
-### `dllm_template_token_ids: List[int]`
+- **`dllm_template_token_ids: List[int]`** — response scaffold containing
+  `mask_id` at fill slots. Engine feeds this in `block_size`-sized chunks
+  instead of auto-generating fresh mask blocks. Scaffold positions stay
+  intact across diffusion. `max_new_tokens` is auto-capped to template
+  length and `ignore_eos=True` is forced.
 
-Response scaffold with `mask_id` at fill slots. When set, the engine feeds
-this token sequence to the dllm algorithm in `block_size`-sized chunks
-instead of auto-generating fresh `[mask] * block_size` blocks. Scaffold
-positions stay intact across diffusion (only `== mask_id` positions get
-refined). `max_new_tokens` is automatically capped to `len(template)`, and
-`ignore_eos=True` is forced so soft-end EOS commits don't truncate the
-response.
+- **`dllm_template_position_gates: List[Optional[List[int]]]`** — per-position
+  vocab allowlist. Used for structured slots (trajectory digits/signs,
+  behavior verb words, complexity tag) to avoid BPE-boundary artifacts.
 
-### `dllm_template_position_gates: List[Optional[List[int]]]`
+- **`dllm_template_forbidden_token_ids: List[int]`** — global blacklist
+  applied at every masked position (JSON-meta chars `"`, `}`, `\`, backtick).
 
-Per-position vocab allowlists. Same length as `dllm_template_token_ids`.
-`None` at a position = unrestricted; a list at a position restricts that
-position's prediction to those token ids. Used for structured slots
-(trajectory `+XX.X,+YY.Y` digits/signs, behavior verb words) to avoid
-BPE-boundary artifacts like `"slow  down"` (double space) or `"00..0"`
-(digit followed by `.`-bearing token).
+Algorithm changes in `HierarchyBlock` (`third_party/sglang/.../dllm/algorithm/
+hierarchy_block.py`):
+- detects template mode via `forward_batch.dllm_template_modes`
+- bypasses AR-token override at chunk position 0
+- returns ALL block positions (not just mask suffix)
+- applies gates + forbidden masks before argmax/topk
+- fixed-step path (default 4 steps/chunk) with rep penalty + within-step
+  dedup at rep-penalty positions (explanation slot)
 
-### `dllm_template_forbidden_token_ids: List[int]`
+Other patches: `Req._init_fill_ids_for_dllm`, `scheduler_output_processor_mixin
+.process_batch_result_dllm_prefill`, plus the per-req flag plumbing through
+`ScheduleBatch → ModelWorkerBatch → ForwardBatch`.
 
-Global blacklist applied at every MASKED position. Used for JSON-meta
-chars (`"`, `}`, `\`, backtick) so even free-text slots like
-`critical_object` values can't emit JSON-breaking tokens.
+## Nav injection
 
-### Algorithm changes
+The loader splices `"navigation_command": "<nav>", ` into the template right
+before `"future_meta_behavior":`. This puts the nav target in the behavior
+block's immediate bidir-attention context, biasing the lateral verb without
+conditional gating. Effect on the 10-sample test: lateral correctness
+goes from 7/10 (without injection) to 9/10 (with).
 
-`HierarchyBlock` (MDM) — block-by-block diffusion with template support:
-- bypass AR-token override at chunk position 0 (template scaffold must
-  stay intact)
-- return ALL block positions (not just mask suffix) so scaffold tokens
-  reach the output
-- apply gates + forbidden masks before argmax/topk
-- **3-tier density-aware top-K**: k=1 for >2/3 masked sub-blocks (prevents
-  filler cascade on long explanation runs), k=2 for >1/2 masked, k=N/2
-  otherwise
+## Final benchmark (10-sample Waymo)
 
-`SpeculativeBlock` — same template handling; AR-verify is skipped in
-template mode (scaffold doesn't follow the model's AR continuation, so
-verify would shrink the accepted prefix to almost nothing).
+| Model | Avg latency | ADE (mean L2, 5 wp) | Lateral acc | Behavior validity |
+|---|---:|---:|:---:|:---:|
+| **SGLang Fast-dVLM (zero-shot)** | **~1.7s** (CAM_FRONT) / 3.3s (CAM_JOINT) | 4.28m (48-sample) | 9/10 | 10/10 |
+| dVLM-AD (finetuned on Waymo CoT) | 33s | — | 9/10 | 10/10 |
 
-`Req._init_fill_ids_for_dllm` — when template is set, appends template
-chunks instead of fresh mask blocks. Each round emits `block_size` tokens
-of template; last chunk is padded with `<|endoftext|>` (Qwen) if shorter.
+SGLang Fast-dVLM matches the finetuned baseline on behavior accuracy at
+**~19× less latency**.
 
-`scheduler_output_processor_mixin.process_batch_result_dllm_prefill` —
-skips the `ar_token` append to `output_ids` in template mode (would
-duplicate / fight with `template[0]`).
-
-## Results (5-sample Waymo, AD CoT)
-
-| Path | Avg latency | Schema | Behavior accuracy | Explanation |
-|---|---:|---|---|---|
-| **SGLang template (mdm)** | **2.08s** | ✓ 12/12 categories | **5/5 lat, 5/5 long** | 3-stage CoT, real content |
-| SGLang free-form (spec) | 1.19s | variable 5-12 (some loops) | 4/5 lat (1 missing) | variable; some AR loops |
-| transformers template | 1.3s | ✓ 12/12 | 4/5 lat | partial CoT with artifacts |
-| dVLM-AD (LLaDA-V finetuned) | 16.3s | data file template (12×yes/no) | 5/5 lat | trained CoT |
-
-The SGLang template path **matches** dVLM-AD on behavior accuracy and
-**beats** the free-form SGLang baseline on schema compliance + V3-CoT
-explanation, at ~13% over the 2s latency target.
-
-## Nav injection (the lateral-accuracy fix)
-
-The loader splices `"navigation_command": "<nav>", ` into the template
-right before `"future_meta_behavior":`. This puts the nav target in the
-behavior block's immediate bidir-attention context, biasing the lateral
-verb without conditional gating.
-
-Effect: lateral correctness 4/5 → 5/5 (sample 2 GO_RIGHT, which would
-otherwise emit `turn left`, now correctly emits `turn right`).
+See `results/waymo_10_compare/` for raw JSONs + reports and
+`examples/longtail_10/` for per-sample browsable outputs.

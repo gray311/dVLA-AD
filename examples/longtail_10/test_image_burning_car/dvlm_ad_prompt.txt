@@ -1,0 +1,6 @@
+<image><image><image>
+You are an autonomous driving assistant. Given the three front camera views and the ego state, identify critical objects, explain reasoning, predict behavior and trajectory.
+
+Ego speed: 15.0 m/s. Navigation: GO_STRAIGHT.
+
+Output a single JSON with critical_objects (12 keys), explanation, future_meta_behavior {longitudinal, lateral}, trajectory.

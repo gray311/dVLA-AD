@@ -1,0 +1,47 @@
+{
+  "model": "Fast_dVLM_3B (zero-shot via SGLang HierarchyBlock)",
+  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"black car\", \"pedestrian\": \"none found\", \"cyclist\": \" found here\", \"construction\": \"none found\", \"traffic_element\": \"orange cone\", \"weather_condition\": \"overcast\", \"road_hazard\": \"fire smoke\", \"emergency_vehicle\": \"none detected\", \"animal\": \"none seen\", \"special_vehicle\": \"none spotted\", \"conflicting_vehicle\": \"none detected\", \"door_opening_vehicle\": \"none found\"}, \"complexity\": \"complex\", \"explanation\": \"The scene shows a fire or smoke on the highway, which blocks lane and. There is car black near nearby front left road traffic to of me ego. The driver instruction GO go straight in right ahead of I my current speed 15 m0 down hazard accident ahead smoke fire so to slow now stop up and keep speed but turn for predicted future lateral forward stay with 274m m, time zero over +0053m then ++86 lateral:_keep_straight\", \"navigation_command\": \"GO_STRAIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"slow down\", \"lateral\": \"keep lane\"}, \"trajectory\": \"0.5s: forward=+15.0m, lateral=+00.0m\n1.0s: forward=+35.0m, lateral=+00.0m\n1.5s: forward=+55.0m, lateral=+00.0m\n2.0s: forward=+75.0m, lateral=+00.0m\n2.5s: forward=+95.0m, lateral=+00.0m\n3.0s: forward=+11.0m, lateral=+00.0m\n3.5s: forward=+11.0m, lateral=+00.0m\n4.0s: forward=+11.0m, lateral=+00.0m\n4.5s: forward=+11.0m, lateral=+00.0m\n5.0s: forward=+11.0m, lateral=+00.0m\"}",
+  "predicted_waypoints_10": [
+    [
+      15.0,
+      0.0
+    ],
+    [
+      35.0,
+      0.0
+    ],
+    [
+      55.0,
+      0.0
+    ],
+    [
+      75.0,
+      0.0
+    ],
+    [
+      95.0,
+      0.0
+    ],
+    [
+      11.0,
+      0.0
+    ],
+    [
+      11.0,
+      0.0
+    ],
+    [
+      11.0,
+      0.0
+    ],
+    [
+      11.0,
+      0.0
+    ],
+    [
+      11.0,
+      0.0
+    ]
+  ],
+  "latency_s": 1.581770896911621
+}
