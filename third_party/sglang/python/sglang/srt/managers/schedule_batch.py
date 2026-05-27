@@ -855,7 +855,12 @@ class Req:
                 )
         elif not getattr(self, '_dllm_prompt_prefilled', True):
             # Second round after prompt prefill.
-            bs = self.dllm_config.block_size
+            chunk_sizes = getattr(self.sampling_params, "dllm_template_chunk_sizes", None)
+            if chunk_sizes:
+                bs = chunk_sizes[0]
+                self._dllm_template_chunk_idx = 0
+            else:
+                bs = self.dllm_config.block_size
             if template:
                 # First chunk of template. No AR-token override at position 0
                 # because the template scaffold typically starts with a
@@ -878,7 +883,14 @@ class Req:
                     self.dllm_ids += [self.dllm_config.mask_id] * bs
             self._dllm_prompt_prefilled = True
         else:
-            bs = self.dllm_config.block_size
+            chunk_sizes = getattr(self.sampling_params, "dllm_template_chunk_sizes", None)
+            if chunk_sizes:
+                self._dllm_template_chunk_idx = getattr(
+                    self, "_dllm_template_chunk_idx", 0,
+                ) + 1
+                bs = chunk_sizes[min(self._dllm_template_chunk_idx, len(chunk_sizes) - 1)]
+            else:
+                bs = self.dllm_config.block_size
             if template:
                 start = self._dllm_template_progress
                 if start < len(template):

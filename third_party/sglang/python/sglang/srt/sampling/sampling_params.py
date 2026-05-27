@@ -65,6 +65,7 @@ class SamplingParams:
         dllm_template_rep_penalty_positions: Optional[List[int]] = None,
         dllm_template_rep_penalty: float = 2.0,
         dllm_template_steps_per_chunk: int = 4,
+        dllm_template_chunk_sizes: Optional[List[int]] = None,
     ) -> None:
         self.max_new_tokens = max_new_tokens
         self.stop_strs = stop
@@ -123,6 +124,12 @@ class SamplingParams:
         # iterations = better quality but slower. Default 4 matches the
         # transformers loader.
         self.dllm_template_steps_per_chunk = dllm_template_steps_per_chunk
+        # Optional per-chunk size override for template mode. When set, the
+        # engine uses chunk_sizes[i] tokens for the i-th chunk instead of the
+        # global block_size. Used by section-aligned decoding where each JSON
+        # section gets its own block sized to fit it. Sum must equal
+        # len(dllm_template_token_ids). When None, falls back to block_size.
+        self.dllm_template_chunk_sizes = dllm_template_chunk_sizes
         # In template mode, the model is allowed to commit EOS at "soft-end"
         # slots (e.g., critical_object tail after "none"). We must NOT let
         # those EOS tokens terminate the response — the full scaffold needs

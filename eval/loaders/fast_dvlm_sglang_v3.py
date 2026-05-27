@@ -102,8 +102,20 @@ def _strip_template_from_prompt(prompt: str) -> str:
 
 
 def load(model_path=None, algorithm="mdm", mem_fraction_static=0.75,
-          quantization=None, max_running_requests=1, chunked_prefill_size=16384):
-    """Load Fast-dVLM as sgl.Engine. ~30-60s for model load + CUDA graph capture."""
+          quantization=None, max_running_requests=1, chunked_prefill_size=16384,
+          max_total_tokens=None, disable_cuda_graph=False, engine_block_size=160):
+    """Load Fast-dVLM as sgl.Engine. ~30-60s for model load + CUDA graph capture.
+
+    engine_block_size: chunk size SGLang uses to feed the V3 template to the
+        diffusion algorithm. Default 160 matches the section-aligned decoding
+        path (each JSON section becomes its own block: crit_objects+complexity
+        = 1 block of 160, explanation = 1, behavior = 1, trajectory = 2). For
+        the legacy 32-token mechanical chunking, pass 32.
+
+    max_total_tokens: optional cap on KV pool size (in tokens). When set, the
+    KV pool is sized for max_total_tokens regardless of mem_fraction_static —
+    useful when a shared GPU has limited free memory.
+    """
     os.environ.setdefault("SGLANG_DISABLE_CUDNN_CHECK", "1")
     import sglang as sgl
     from transformers import AutoProcessor, AutoTokenizer
@@ -122,17 +134,19 @@ def load(model_path=None, algorithm="mdm", mem_fraction_static=0.75,
         max_running_requests=max_running_requests,
         chunked_prefill_size=chunked_prefill_size,
         dllm_algorithm=dllm_algo,
-        disable_cuda_graph=False,
+        disable_cuda_graph=disable_cuda_graph,
         log_level="warning",
-        enable_metrics=True,
+        enable_metrics=False,
         mm_attention_backend="triton_attn",
     )
+    if max_total_tokens is not None:
+        engine_kwargs["max_total_tokens"] = max_total_tokens
     # Larger sub_block_size (16 instead of default 8) → half the sub-block
     # iterations per chunk → ~half the forward count. Quality is preserved
     # because scaffold positions are already committed (visible bidirectional)
     # and only mask positions get refined.
     import yaml, tempfile
-    algo_config = {"sub_block_size": 32, "debug": False}
+    algo_config = {"sub_block_size": 32, "debug": False, "block_size": engine_block_size}
     cfg_file = tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False)
     yaml.safe_dump(algo_config, cfg_file)
     cfg_file.close()
@@ -172,6 +186,104 @@ def _build_input_ids(processor, image_path, prompt_text):
         padding=True, return_tensors="pt",
     )
     return inputs.input_ids[0].tolist()
+
+
+_SECTION_OF_KIND = {
+    "critical_head": "crit_cmplx", "critical_tail": "crit_cmplx",
+    "complexity": "crit_cmplx",
+    "explanation": "expl",
+    "long_w1": "beh", "long_w2": "beh", "lat_w1": "beh", "lat_w2": "beh",
+    "traj_sign": "traj", "traj_tens": "traj",
+    "traj_ones": "traj", "traj_frac": "traj",
+}
+
+
+def _compute_section_spans(ids, slot_info):
+    """Group token positions into contiguous V3 sections (crit_cmplx, expl,
+    beh, traj). Scaffold tokens are assigned to the NEXT mask's section.
+    Returns list of (section_name, start, end).
+    """
+    n = len(ids)
+    section_per_pos = [None] * n
+    for pos, kind in slot_info:
+        section_per_pos[pos] = _SECTION_OF_KIND.get(kind, kind)
+    # Backward-fill: scaffold before a mask inherits that mask's section.
+    last = None
+    for i in range(n - 1, -1, -1):
+        if section_per_pos[i] is not None:
+            last = section_per_pos[i]
+        else:
+            section_per_pos[i] = last
+    # Forward-fill: any trailing positions after the LAST mask (no next mask
+    # to inherit from) inherit the PREVIOUS mask's section.
+    last = None
+    for i in range(n):
+        if section_per_pos[i] is not None:
+            last = section_per_pos[i]
+        elif last is not None:
+            section_per_pos[i] = last
+
+    spans = []
+    cur_sec, cur_start = section_per_pos[0], 0
+    for i in range(1, n):
+        if section_per_pos[i] != cur_sec:
+            spans.append((cur_sec, cur_start, i))
+            cur_sec, cur_start = section_per_pos[i], i
+    spans.append((cur_sec, cur_start, n))
+    return spans
+
+
+def _section_align_template(ids, slot_info, block_size, pad_token):
+    """Uniform-block section alignment: pad each section's tail to a multiple
+    of block_size. Returns (padded_ids, remapped_slot_info).
+    """
+    spans = _compute_section_spans(ids, slot_info)
+    old_to_new = [0] * len(ids)
+    new_ids = []
+    for sec, start, end in spans:
+        for i, old_pos in enumerate(range(start, end)):
+            old_to_new[old_pos] = len(new_ids) + i
+        new_ids.extend(ids[start:end])
+        while len(new_ids) % block_size != 0:
+            new_ids.append(pad_token)
+    new_slot_info = [(old_to_new[pos], kind) for pos, kind in slot_info]
+    return new_ids, new_slot_info
+
+
+def _section_variable_template(ids, slot_info, max_chunk_size, pad_token):
+    """Section-aligned VARIABLE-size chunks. Each section becomes its own
+    chunk (or split into N chunks of max_chunk_size when oversize). No
+    padding inserted between sections — only at the end of the last chunk.
+
+    Returns (ids_out, remapped_slot_info, chunk_sizes) where chunk_sizes
+    is a list whose sum == len(ids_out).
+    """
+    spans = _compute_section_spans(ids, slot_info)
+    old_to_new = [0] * len(ids)
+    new_ids = []
+    chunk_sizes = []
+    for sec, start, end in spans:
+        sec_len = end - start
+        for i, old_pos in enumerate(range(start, end)):
+            old_to_new[old_pos] = len(new_ids) + i
+        new_ids.extend(ids[start:end])
+        # Split this section into one or more chunks, each ≤ max_chunk_size.
+        if sec_len <= max_chunk_size:
+            chunk_sizes.append(sec_len)
+        else:
+            # Even split — e.g. traj 223 with max=128 → [112, 111] is bad
+            # because of mask-boundary issues, so split at section_size // n.
+            n_chunks = (sec_len + max_chunk_size - 1) // max_chunk_size
+            base = sec_len // n_chunks
+            rem = sec_len % n_chunks
+            for k in range(n_chunks):
+                chunk_sizes.append(base + (1 if k < rem else 0))
+    # Pad final chunk to keep CUDA graph happy if needed — but with variable
+    # chunk sizes, we don't pad. Just return as-is.
+    new_slot_info = [(old_to_new[pos], kind) for pos, kind in slot_info]
+    assert sum(chunk_sizes) == len(new_ids), \
+        f"sum(chunk_sizes)={sum(chunk_sizes)} != len(new_ids)={len(new_ids)}"
+    return new_ids, new_slot_info, chunk_sizes
 
 
 def _inject_nav_into_template(template_ids, slot_info, tokenizer, mask_id, nav_command):
@@ -229,8 +341,22 @@ def _inject_nav_into_template(template_ids, slot_info, tokenizer, mask_id, nav_c
 
 
 def generate(bundle, image_paths, question, max_new_tokens=None, temperature=0.0,
-              block_size=32, nav_command=None, **kwargs):
+              block_size=160, nav_command=None, **kwargs):
     """V3 template-fill via SGLang dllm engine. Returns (text, latency_s).
+
+    Default decoding: **section-aligned, block_size=160** (Fast-dDrive style).
+    The V3 JSON schema has 4 sections (critical_objects+complexity,
+    explanation, behavior, trajectory); each section gets its own 160-token
+    block (trajectory uses 2). vs the legacy 32-token chunking, this is
+    ~2x faster (1.30s → 0.69s on N=30 Waymo val) and ~6% better mean ADE.
+
+    Caller overrides via kwargs:
+      section_align (bool, default True): align chunk boundaries to V3 sections
+      block_size (int, default 160): bytes per chunk in section-aligned mode
+      steps_per_chunk (int, default 4): inner diffusion steps per chunk
+      section_align="variable" + max_chunk_size=N: experimental variable-size
+        chunks (one per section, no padding). Requires matching
+        engine_block_size and currently fails due to SGLang buffer pre-alloc.
 
     `nav_command` (optional): when set, injects a literal
     `"navigation_command": "<nav>"` key-value right BEFORE the behavior block
@@ -257,12 +383,33 @@ def generate(bundle, image_paths, question, max_new_tokens=None, temperature=0.0
             template_ids_list, slot_info, tokenizer, mask_id, nav_command,
         )
 
-    # Pad template to multiple of block_size — SGLang will chunk it into
-    # block_size pieces.
+    # Pad template — three modes:
+    #   section_align=False  (default): pad once at END to multiple of block_size.
+    #   section_align=True:            pad EACH section to multiple of block_size
+    #                                   (uniform chunks, some padding waste).
+    #   section_align="variable":      each section becomes its own chunk (or
+    #                                   split into max_chunk_size pieces). No
+    #                                   inter-section padding. Sends `chunk_sizes`
+    #                                   to engine so the chunker uses per-chunk
+    #                                   sizes instead of global block_size.
     pad_token = 151643  # Qwen <|endoftext|> — stripped by skip_special_tokens=True
-    padded = list(template_ids_list)
-    while len(padded) % block_size != 0:
-        padded.append(pad_token)
+    # Section-aligned decoding is ON by default (each V3 section → its own block).
+    # Set section_align=False to use legacy 32-token mechanical chunking.
+    section_align = kwargs.get("section_align", True)
+    chunk_sizes = None
+    if section_align == "variable":
+        max_chunk_size = int(kwargs.get("max_chunk_size", 192))
+        padded, slot_info, chunk_sizes = _section_variable_template(
+            template_ids_list, slot_info, max_chunk_size, pad_token,
+        )
+    elif section_align:
+        padded, slot_info = _section_align_template(
+            template_ids_list, slot_info, block_size, pad_token,
+        )
+    else:
+        padded = list(template_ids_list)
+        while len(padded) % block_size != 0:
+            padded.append(pad_token)
     n_template = len(padded)
 
     # Build per-position vocab gates. Length matches padded template.
@@ -303,6 +450,8 @@ def generate(bundle, image_paths, question, max_new_tokens=None, temperature=0.0
         # but coarser ADE; 8 = closer to transformers loader's ADE at 2-3s.
         "dllm_template_steps_per_chunk": kwargs.get("steps_per_chunk", 4),
     }
+    if chunk_sizes is not None:
+        sampling["dllm_template_chunk_sizes"] = chunk_sizes
 
     torch.cuda.synchronize()
     t0 = time.time()

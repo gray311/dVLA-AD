@@ -106,7 +106,38 @@ block's immediate bidir-attention context, biasing the lateral verb without
 conditional gating. Effect on the 10-sample test: lateral correctness
 goes from 7/10 (without injection) to 9/10 (with).
 
-## Final benchmark (10-sample Waymo)
+## Section-aligned decoding (default since v2)
+
+Inspired by Fast-dDrive's Section Diffusion, the V3 JSON schema has 4
+semantically-distinct sections; each one now gets its own diffusion block
+instead of being split across mechanical 32-token chunks:
+
+| Section                          | Tokens | Masks | Block(s) at bs=160 |
+|----------------------------------|-------:|------:|-------------------:|
+| critical_objects + complexity    |    140 |    25 | 1                  |
+| explanation                      |    112 |   100 | 1                  |
+| future_meta_behavior             |     24 |     4 | 1                  |
+| trajectory                       |    223 |    80 | 2                  |
+| **Total**                        |    499 |   209 | **5 (vs 16 baseline)** |
+
+Each section is padded to a multiple of `block_size=160` with EOS so chunk
+boundaries land on section transitions. The SGLang engine is configured
+with `engine_block_size=160` so its CUDA-graph buffers fit the larger chunk.
+
+On N=30 stratified Waymo val samples:
+
+| Decoding              | mean lat | mean ADE | median ADE | p90 ADE |
+|-----------------------|---------:|---------:|-----------:|--------:|
+| Legacy (bs=32)        |    1.30s |    5.59m |      2.47m |  11.41m |
+| **Section-aligned (bs=160)** | **0.69s (-47%)** | **5.25m (-6%)** | **1.61m (-35%)** | 15.97m (+40%) |
+
+Half the latency, slightly better mean ADE, 35% better median (typical-case
+quality), at the cost of a heavier tail. Adopted as the default in
+`fast_dvlm_sglang_v3.load(engine_block_size=160)` and
+`generate(section_align=True, block_size=160)`. Pass
+`section_align=False, block_size=32` to revert to legacy chunking.
+
+## Final benchmark (10-sample Waymo, legacy bs=32 baseline)
 
 | Model | Avg latency | ADE (mean L2, 5 wp) | Lateral acc | Behavior validity |
 |---|---:|---:|:---:|:---:|
@@ -114,7 +145,8 @@ goes from 7/10 (without injection) to 9/10 (with).
 | dVLM-AD (finetuned on Waymo CoT) | 33s | — | 9/10 | 10/10 |
 
 SGLang Fast-dVLM matches the finetuned baseline on behavior accuracy at
-**~19× less latency**.
+**~19× less latency**. With section-aligned decoding (now default) that
+drops to **~0.7s/sample** on the same hardware.
 
 See `results/waymo_10_compare/` for raw JSONs + reports and
 `examples/longtail_10/` for per-sample browsable outputs.

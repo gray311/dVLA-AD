@@ -113,6 +113,7 @@ class HierarchyBlock(DllmAlgorithm):
                 self.last_block_end_position = None
                 self.rep_token_counts = None
                 self.fwd_count = 0  # reset for benchmarking
+                self._logged_mode_this_req = False
 
         # Handle token inheritance for all-mask blocks (skip in template mode —
         # template scaffold at position 0 must stay intact; if position 0 IS a
@@ -156,18 +157,50 @@ class HierarchyBlock(DllmAlgorithm):
             rep_penalty = getattr(forward_batch, "dllm_template_rep_penalty", 0.0)
             n_steps = max(1, getattr(forward_batch, "dllm_template_steps_per_chunk", 4))
 
+            # Confidence-threshold mode (Fast-dDrive style). When env
+            # SGLANG_DLLM_THRESHOLD > 0, switch from fixed-K-per-step to
+            # "commit all positions with conf > threshold; fallback top-1".
+            # max_iter cap (default 8) bounds worst-case forwards/chunk.
+            import os as _os
+            _thresh_env = _os.environ.get("SGLANG_DLLM_THRESHOLD", "")
+            try:
+                _thresh = float(_thresh_env) if _thresh_env else 0.0
+            except ValueError:
+                _thresh = 0.0
+            use_threshold_mode = _thresh > 0.0
+            max_iter_cap = int(_os.environ.get("SGLANG_DLLM_MAX_ITER", "8"))
+            if _os.environ.get("DLLM_FWD_LOG"):
+                # One-time per-chunk debug to confirm which path is active.
+                if not getattr(self, "_logged_mode_this_req", False):
+                    print(
+                        f"[HierarchyBlock] template-mode path: "
+                        f"use_threshold={use_threshold_mode} thresh={_thresh} "
+                        f"max_iter={max_iter_cap}",
+                        flush=True,
+                    )
+                    self._logged_mode_this_req = True
+
             chunk_mask = forward_batch.input_ids == self.mask_id
             n_mask_chunk = int(chunk_mask.sum().item())
 
             if n_mask_chunk > 0:
-                # Pre-distribute commit budget across n_steps so all masks
-                # get committed by the last step. Same as transformers loader.
-                base = max(1, n_mask_chunk // n_steps)
-                remainder = n_mask_chunk % n_steps
-                budget = [base + (1 if i < remainder else 0) for i in range(n_steps)]
-                # Trim trailing zero-budget steps.
-                while budget and budget[-1] == 0:
-                    budget.pop()
+                if use_threshold_mode:
+                    # No pre-distributed K; iterate up to max_iter_cap.
+                    # `k_per_step` stays None so the inner loop uses the
+                    # threshold selector. Stop early once no masks remain
+                    # OR no position cleared the threshold AND fallback
+                    # commits saturate (handled inside the loop).
+                    iter_count = max_iter_cap
+                    budget = [None] * iter_count
+                else:
+                    # Pre-distribute commit budget across n_steps so all masks
+                    # get committed by the last step. Same as transformers loader.
+                    base = max(1, n_mask_chunk // n_steps)
+                    remainder = n_mask_chunk % n_steps
+                    budget = [base + (1 if i < remainder else 0) for i in range(n_steps)]
+                    # Trim trailing zero-budget steps.
+                    while budget and budget[-1] == 0:
+                        budget.pop()
 
                 rep_chunk_pos_set = set(rep_chunk_pos_list)
 
@@ -247,10 +280,23 @@ class HierarchyBlock(DllmAlgorithm):
                     conf = torch.where(
                         cur_mask, conf, torch.tensor(-np.inf, device=device),
                     )
-                    k_actual = min(k, int(cur_mask.sum().item()))
-                    if k_actual <= 0:
-                        continue
-                    topk_idx = torch.topk(conf, k_actual).indices
+
+                    if use_threshold_mode:
+                        # Commit all positions whose conf cleared threshold.
+                        unmask = (conf > _thresh) & cur_mask
+                        if unmask.any():
+                            topk_idx = unmask.nonzero(as_tuple=False).squeeze(-1)
+                        else:
+                            # Fallback: commit single highest-confidence mask.
+                            best = int(conf.argmax().item())
+                            topk_idx = torch.tensor(
+                                [best], dtype=torch.long, device=device,
+                            )
+                    else:
+                        k_actual = min(k, int(cur_mask.sum().item()))
+                        if k_actual <= 0:
+                            continue
+                        topk_idx = torch.topk(conf, k_actual).indices
 
                     # Within-step dedup at rep positions: ensure no two
                     # rep-position commits share the same token in this step.
