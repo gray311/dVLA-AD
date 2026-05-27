@@ -1,46 +1,46 @@
 {
-  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"white car\", \"pedestrian\": \"none found\", \"cyclist\": \" found none\", \"construction\": \"none found\", \"traffic_element\": \"street lights\", \"weather_condition\": \"clearcast\", \"road_hazard\": \"none detected\", \"emergency_vehicle\": \"none found\", \"animal\": \"none found\", \"special_vehicle\": \"none found\", \"conflicting_vehicle\": \"none found\", \"door_opening_vehicle\": \"none found\"}, \"complexity\": \"simple\", \"explanation\": \"The scene is a quiet residential street with night, and cars few parked. The white car a the is of moving to in right the oncoming road. no driver instruction driving instructions are given but based the current speed traffic lane  left, I lateral frame behavior turning turn keep change go will now up ahead down slow stop speed5 m forward+0m23 lateral-184m s 0.5 forward:forward=+0276m latera=-093\", \"navigation_command\": \"GO_RIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"speed up\", \"lateral\": \"turn left\"}, \"trajectory\": \"0.5s: forward=+02.5m, lateral=+00.3m\n1.0s: forward=+05.2m, lateral=+00.5m\n1.5s: forward=+07.8m, lateral=+00.8m\n2.0s: forward=+10.5m, lateral=+01.1m\n2.5s: forward=+13.1m, lateral=+01.4m\n3.0s: forward=+15.8m, lateral=+01.5m\n3.5s: forward=+18.5m, lateral=+01.6m\n4.0s: forward=+11.2m, lateral=+01.7m\n4.5s: forward=+13.9m, lateral=+01.8m\n5.0s: forward=+16.6m, lateral=+01.9m\"}",
+  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"white car\", \"pedestrian\": \"none here\", \"cyclist\": \"none here\", \"construction\": \"none here\", \"traffic_element\": \"none light\", \"weather_condition\": \"overcast\", \"road_hazard\": \"fire hydr\", \"emergency_vehicle\": \"none here\", \"animal\": \"none here\", \"special_vehicle\": \"none truck\", \"conflicting_vehicle\": \"none car\", \"door_opening_vehicle\": \"none car\"}, \"complexity\": \"complex\", \"explanation\": \"The scene is a nighttime street at night the,.\u591c\u665a\u591c\u8857\u9053\u8857\u4e0a\u6709\u5efa\u7b51\u706f\u5728\u524d\u4eae\u8def\u706f\uff0c\u5728\u540e\u76cf\u6811\u6709\u7816\u7ea2\u8272\u8f86\u6c7d\u8f66\u7684\u5e74]?6  ?\u7684\u662f\u548c\u6570\u5b57\u6570\u5b572\u662f\u3002\uff1a]480 \u4e2a\u6570659]8175\uff0c\u4e86\u4e0b\u5e74\u9f84\u5427\u546234\u5c81\u662f\u4e0d\u662f\u4f60\n\u6211\u662f\u8bf4\u5c0f\u660e\u5417\uff1f\u4e8e\u7684\u3001\u662f\uff0c\u548c3\u90a3\u6211   \u8fd9\u3002 \u3011\n210Y\", \"navigation_command\": \"GO_RIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"speed up\", \"lateral\": \"turn left\"}, \"trajectory\": \"0.5s: forward=+00.6m, lateral=+00.3m\n1.0s: forward=+01.6m, lateral=+00.8m\n1.5s: forward=+00.8m, lateral=+00.3m\n2.0s: forward=+00.5m, lateral=+00.8m\n2.5s: forward=+00.2m, lateral=+00.8m\n3.0s: forward=+00.2m, lateral=+00.8m\n3.5s: forward=+00.2m, lateral=+00.8m\n4.0s: forward=+00.2m, lateral=+00.8m\n4.5s: forward=+00.2m, lateral=+00.8m\n5.0s: forward=+00.2m, lateral=+00.8m\"}",
   "predicted_waypoints_10": [
     [
-      2.5,
+      0.6,
       0.3
     ],
     [
-      5.2,
-      0.5
-    ],
-    [
-      7.8,
+      1.6,
       0.8
     ],
     [
-      10.5,
-      1.1
+      0.8,
+      0.3
     ],
     [
-      13.1,
-      1.4
+      0.5,
+      0.8
     ],
     [
-      15.8,
-      1.5
+      0.2,
+      0.8
     ],
     [
-      18.5,
-      1.6
+      0.2,
+      0.8
     ],
     [
-      11.2,
-      1.7
+      0.2,
+      0.8
     ],
     [
-      13.9,
-      1.8
+      0.2,
+      0.8
     ],
     [
-      16.6,
-      1.9
+      0.2,
+      0.8
+    ],
+    [
+      0.2,
+      0.8
     ]
   ],
-  "ade_first5_m": 4.174200770936789
+  "ade_first5_m": 4.017885970535936
 }

@@ -1,5 +1,5 @@
 {
-  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"yellow bus\", \"pedestrian\": \"none found\", \"cyclist\": \" found here\", \"construction\": \"none found\", \"traffic_element\": \"clear road\", \"weather_condition\": \"overcast\", \"road_hazard\": \"none detected\", \"emergency_vehicle\": \"not seen\", \"animal\": \"none seen\", \"special_vehicle\": \"yellow bus\", \"conflicting_vehicle\": \"none detected\", \"door_opening_vehicle\": \"none found\"}, \"complexity\": \"simple\", \"explanation\": \"The scene shows a busy highway under with multiple large and yellow bus, cars, and signs. the road is clear straight traffic vehicles of no hazard or the there are oncoming emergency vehicle pedestrian to in this path The current driver driving at  speed4 going straightthe the lane frame shows no need change hazards ahead next will be go up maintain keep down slow now as it is not safe any turning turn right left turns but stay straightlanewaytrajectory:futurefuture behavior.longlongspeedup_speed_str0\", \"navigation_command\": \"GO_STRAIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"speed up\", \"lateral\": \"keep lane\"}, \"trajectory\": \"0.5s: forward=+00.0m, lateral=+00.0m\n1.0s: forward=+04.0m, lateral=+00.0m\n1.5s: forward=+08.0m, lateral=+00.0m\n2.0s: forward=+12.0m, lateral=+00.0m\n2.5s: forward=+16.0m, lateral=+00.0m\n3.0s: forward=+20.0m, lateral=+00.0m\n3.5s: forward=+24.0m, lateral=+00.0m\n4.0s: forward=+88.0m, lateral=+00.0m\n4.5s: forward=+12.0m, lateral=+00.0m\n5.0s: forward=+16.0m, lateral=+00.0m\"}",
+  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"none bus\", \"pedestrian\": \"nonehere\", \"cyclist\": \"nonehere\", \"construction\": \"nonehere\", \"traffic_element\": \"signs\", \"weather_condition\": \"overcast\", \"road_hazard\": \"nonehere\", \"emergency_vehicle\": \"nonehere\", \"animal\": \"nonehere\", \"special_vehicle\": \"bus here\", \"conflicting_vehicle\": \"nonehere\", \"door_opening_vehicle\": \"nonehere\"}, \"complexity\": \"complex\", \"explanation\": \"The scene is the a highway road with, bridge (bridge.\u4e2d\u5fc3 (civicivicC\u5317\u68658\u8def\uff1f\u91cc20\u6570\u5b5767\u6570\u5b57\u6ca1\u6709\u4e0d\u4e0d\u662f\u5426\u5317\u4f46\u6807\u8fd9\u91cc\u662f\u4e0d\u662f\u4e0d\u4e0d\u662f\u8fd9\u4e2a\u90a39\u4e86\u4e86\u3002\n       ,meta?\n]+\uff1a47\u6570\u4f4d\u4e3a598\ufffd\u6216 360\u5417\u662f\uff0c1\u6211\u662f\u3002\u90a3\u4e48\u662f\u4e0d\u662f\u662f\u7684\uff0c\u4e0054\u548c\u8fd9\u4e8e \u3001\u62113\u3011\u3002\u6211\u662f21\n\", \"navigation_command\": \"GO_STRAIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"keep speed\", \"lateral\": \"keep lane\"}, \"trajectory\": \"0.5s: forward=+00.0m, lateral=+00.0m\n1.0s: forward=+04.0m, lateral=+00.0m\n1.5s: forward=+04.0m, lateral=+00.0m\n2.0s: forward=+00.0m, lateral=+00.0m\n2.5s: forward=+00.0m, lateral=+00.0m\n3.0s: forward=+20.0m, lateral=+00.0m\n3.5s: forward=+10.0m, lateral=+00.0m\n4.0s: forward=+00.0m, lateral=+00.0m\n4.5s: forward=+00.0m, lateral=+00.0m\n5.0s: forward=+20.1m, lateral=+00.0m\"}",
   "predicted_waypoints_10": [
     [
       0.0,
@@ -10,15 +10,15 @@
       0.0
     ],
     [
-      8.0,
+      4.0,
       0.0
     ],
     [
-      12.0,
+      0.0,
       0.0
     ],
     [
-      16.0,
+      0.0,
       0.0
     ],
     [
@@ -26,21 +26,21 @@
       0.0
     ],
     [
-      24.0,
+      10.0,
       0.0
     ],
     [
-      88.0,
+      0.0,
       0.0
     ],
     [
-      12.0,
+      0.0,
       0.0
     ],
     [
-      16.0,
+      20.1,
       0.0
     ]
   ],
-  "ade_first5_m": 5.30372061791995
+  "ade_first5_m": 2.946242249037597
 }

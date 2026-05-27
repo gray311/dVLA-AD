@@ -1,46 +1,46 @@
 {
-  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"white car\", \"pedestrian\": \"none found\", \"cyclist\": \" found here\", \"construction\": \"none found\", \"traffic_element\": \"green light\", \"weather_condition\": \"scast\", \"road_hazard\": \"none detected\", \"emergency_vehicle\": \"none seen\", \"animal\": \"none found\", \"special_vehicle\": \"none spotted\", \"conflicting_vehicle\": \"none detected\", \"door_opening_vehicle\": \"none found\"}, \"complexity\": \"simple\", \"explanation\": \"The scene is a typical city intersection with Oak oak and Franklin the., The buildings traffic on cars sidewalks pedestrians are street clear green, there's no signs hazards or emergency in visible vehicles road conditions no weather seen animals vehicle future behavior driver current driving to go left maintaining speed down will of keep  forward+205m lateral m right lane turning turn left5s:+403m1.86 later lateral stay change_left2.5s forwardforward:keep_keep_str straight\", \"navigation_command\": \"GO_LEFT\", \"future_meta_behavior\": {\"longitudinal\": \"keep down\", \"lateral\": \"turn left\"}, \"trajectory\": \"0.5s: forward=+02.5m, lateral=+00.3m\n1.0s: forward=+05.7m, lateral=+00.5m\n1.5s: forward=+08.5m, lateral=+00.8m\n2.0s: forward=+11.4m, lateral=+01.1m\n2.5s: forward=+14.3m, lateral=+01.4m\n3.0s: forward=+17.2m, lateral=+01.5m\n3.5s: forward=+20.1m, lateral=+01.7m\n4.0s: forward=+23.0m, lateral=+01.9m\n4.5s: forward=+26.0m, lateral=+01.9m\n5.0s: forward=+29.0m, lateral=+02.0m\"}",
+  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"white car\", \"pedestrian\": \"nonehere\", \"cyclist\": \"nonehere\", \"construction\": \"nonehere\", \"traffic_element\": \"traffic light\", \"weather_condition\": \"sunny\", \"road_hazard\": \"none road\", \"emergency_vehicle\": \"nonehere\", \"animal\": \"nonehere\", \"special_vehicle\": \"nonehere\", \"conflicting_vehicle\": \"nonehere\", \"door_opening_vehicle\": \"nonehere\"}, \"complexity\": \"complex\", \"explanation\": \"The scene is the a street intersection in with. of and,\u8857\u9053\u6709\u89d2\u8def\u53e3\u8857\u9053\u5728\u4e2d\u95f4.\u6709\u5f88\u591a\ufffd\u5efa\u7b51\u706f\u6761\u5e7f\u544a\u4fe1\u53f7\u76cf\u5efa\u7b51\u7269\u724c\u5e62\u680b\u7ea2\u7eff\u697c\u5f20\u548c\u91cc\u5e02\uff1a\uff0c678\uff1b\uff1b\u524d\u8f66\u6811\u3002\ufffd53\u662f\u6211\u662f284?\n\u30119764\u3010\n\uff1a0]]\u90a351\u4f60\uff1f\uff0c\u90a3\uff0c\u4e86\u8fd9\u4e2a\u548c\u3002\u6211\u3001\u7684\u662f\u6211\u662f3\u8fd9\u30110 12\n\", \"navigation_command\": \"GO_LEFT\", \"future_meta_behavior\": {\"longitudinal\": \"slow down\", \"lateral\": \"turn left\"}, \"trajectory\": \"0.5s: forward=+00.3m, lateral=+00.3m\n1.0s: forward=+00.5m, lateral=+00.8m\n1.5s: forward=+00.5m, lateral=+00.5m\n2.0s: forward=+10.4m, lateral=+00.8m\n2.5s: forward=+14.5m, lateral=+02.4m\n3.0s: forward=+14.5m, lateral=+00.5m\n3.5s: forward=+10.5m, lateral=+00.5m\n4.0s: forward=+00.3m, lateral=+00.3m\n4.5s: forward=+00.5m, lateral=+00.5m\n5.0s: forward=+00.5m, lateral=+00.5m\"}",
   "predicted_waypoints_10": [
     [
-      2.5,
+      0.3,
       0.3
     ],
     [
-      5.7,
-      0.5
-    ],
-    [
-      8.5,
+      0.5,
       0.8
     ],
     [
-      11.4,
-      1.1
+      0.5,
+      0.5
     ],
     [
-      14.3,
-      1.4
+      10.4,
+      0.8
     ],
     [
-      17.2,
-      1.5
+      14.5,
+      2.4
     ],
     [
-      20.1,
-      1.7
+      14.5,
+      0.5
     ],
     [
-      23.0,
-      1.9
+      10.5,
+      0.5
     ],
     [
-      26.0,
-      1.9
+      0.3,
+      0.3
     ],
     [
-      29.0,
-      2.0
+      0.5,
+      0.5
+    ],
+    [
+      0.5,
+      0.5
     ]
   ],
-  "ade_first5_m": 4.598749249049749
+  "ade_first5_m": 4.108487155005827
 }

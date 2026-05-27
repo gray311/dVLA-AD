@@ -1,8 +1,8 @@
 {
-  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"black car\", \"pedestrian\": \"none found\", \"cyclist\": \" found none\", \"construction\": \"none found\", \"traffic_element\": \"clear light\", \"weather_condition\": \"overcast\", \"road_hazard\": \"none detected\", \"emergency_vehicle\": \"none found\", \"animal\": \"none found\", \"special_vehicle\": \"none found\", \"conflicting_vehicle\": \"none found\", \"door_opening_vehicle\": \"none found\"}, \"complexity\": \"simple\", \"explanation\": \"The scene shows a highway with no clear hazards, vehicles, pedestrians or the and cyclists zones. The light is straight driving traffic car on road overcast sky There no signs of cars there are any or in animals near vehiclecoming emergency visible detected not ahead. to the current driver I will keep maintain my cruising of 21.9 m andslow slow down at 1 m05 s/s forward as lane speed path clear safe withintraffic future_meta:metafuturefuture lateral behavior.turn_straight\", \"navigation_command\": \"GO_STRAIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"keep speed\", \"lateral\": \"keep lane\"}, \"trajectory\": \"0.5s: forward=+21.9m, lateral=+00.0m\n1.0s: forward=+21.9m, lateral=+00.0m\n1.5s: forward=+21.9m, lateral=+00.0m\n2.0s: forward=+21.9m, lateral=+00.0m\n2.5s: forward=+21.9m, lateral=+00.0m\n3.0s: forward=+21.9m, lateral=+00.0m\n3.5s: forward=+21.9m, lateral=+00.0m\n4.0s: forward=+19.9m, lateral=+00.0m\n4.5s: forward=+11.9m, lateral=+00.0m\n5.0s: forward=+11.9m, lateral=+00.0m\"}",
+  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"none car\", \"pedestrian\": \"none person\", \"cyclist\": \"none cyclist\", \"construction\": \"none zone\", \"traffic_element\": \"none light\", \"weather_condition\": \"overcast\", \"road_hazard\": \"none hazard\", \"emergency_vehicle\": \"none vehicle\", \"animal\": \"none animal\", \"special_vehicle\": \"none car\", \"conflicting_vehicle\": \"none car\", \"door_opening_vehicle\": \"none car\"}, \"complexity\": \"complex\", \"explanation\": \"The current is a the highway road of a city, driving in on ands\uff0c\u9ad8\u901f\u524d\u6709\u6b63\u5411\u65b9\u5411\u9053\u706f\u8f66\u9053\uff0c\u9053\u8def\u8def\u6765\u7684\u591a\u5e02\u8f66\uff1bm-/\u6570\u5b57 [ ]][]\n9[\n?][ \uff1f\u6570\u4e86\uff1a\u300246[\n327.8]?0947\ufffd.5601\u662f\u6211\u662f,]\u90a3\u662f\u7684\u30025\u548c4\u4e00\u8fd9\u4e2a\u6211\t\u30013]\u8fd9 \u301121\n\", \"navigation_command\": \"GO_STRAIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"keep speed\", \"lateral\": \"keep lane\"}, \"trajectory\": \"0.5s: forward=+10.9m, lateral=+00.0m\n1.0s: forward=+21.9m, lateral=+00.0m\n1.5s: forward=+54.9m, lateral=+00.0m\n2.0s: forward=+54.9m, lateral=+00.0m\n2.5s: forward=+54.9m, lateral=+00.0m\n3.0s: forward=+11.9m, lateral=+00.0m\n3.5s: forward=+50.9m, lateral=+00.0m\n4.0s: forward=+50.9m, lateral=+00.0m\n4.5s: forward=+50.9m, lateral=+00.0m\n5.0s: forward=+10.9m, lateral=+00.0m\"}",
   "predicted_waypoints_10": [
     [
-      21.9,
+      10.9,
       0.0
     ],
     [
@@ -10,27 +10,15 @@
       0.0
     ],
     [
-      21.9,
+      54.9,
       0.0
     ],
     [
-      21.9,
+      54.9,
       0.0
     ],
     [
-      21.9,
-      0.0
-    ],
-    [
-      21.9,
-      0.0
-    ],
-    [
-      21.9,
-      0.0
-    ],
-    [
-      19.9,
+      54.9,
       0.0
     ],
     [
@@ -38,9 +26,21 @@
       0.0
     ],
     [
-      11.9,
+      50.9,
+      0.0
+    ],
+    [
+      50.9,
+      0.0
+    ],
+    [
+      50.9,
+      0.0
+    ],
+    [
+      10.9,
       0.0
     ]
   ],
-  "ade_first5_m": 7.834840714052777
+  "ade_first5_m": 23.058127640661258
 }

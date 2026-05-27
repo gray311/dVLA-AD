@@ -61,15 +61,17 @@ SGLang's schema is richer (open-vocab perception, complexity tag, finer
 
 ## Latency
 
-- SGLang uses CAM_JOINT (stitched 3-cam, 2818×1079): **~3.3 s/sample**.
-  The vision tower processes ~4× more tokens than CAM_FRONT alone
-  (which would give ~2.0 s).
+- SGLang uses CAM_JOINT (stitched 3-cam, 2818×1079): **~1.6 s/sample**
+  (section-aligned bs=160 — the new default; was ~3.3 s with legacy
+  bs=32). The vision tower still processes ~4× more tokens than
+  CAM_FRONT alone (CAM_FRONT would give ~0.7 s).
 - dVLM-AD uses 3 individual cams: **~33 s/sample** (HuggingFace
   transformers path, 64 diffusion steps over 222 masks).
 - Test image: dVLM-AD ~21 s (same template, single image fed to all 3
   cam slots).
 
-→ SGLang is **~10× faster** at comparable behavior accuracy.
+→ SGLang is now **~20× faster** than dVLM-AD at comparable behavior
+accuracy (was ~10× before section alignment).
 
 ## test_image_burning_car — OOD hazard highlight
 

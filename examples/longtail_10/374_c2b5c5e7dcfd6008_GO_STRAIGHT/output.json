@@ -1,8 +1,8 @@
 {
-  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"white car\", \"pedestrian\": \"none found\", \"cyclist\": \" found none\", \"construction\": \"none seen\", \"traffic_element\": \"streetlights\", \"weather_condition\": \"clearcast\", \"road_hazard\": \"none detected\", \"emergency_vehicle\": \"not seen\", \"animal\": \"none visible\", \"special_vehicle\": \"no bus\", \"conflicting_vehicle\": \"no seen\", \"door_opening_vehicle\": \"no found\"}, \"complexity\": \"simple\", \"explanation\": \"The scene shows a dark, with night-time road car driving in the. The are is street few andlights on lights traffic no of light. there cars other clear vehicles seen vehicle ahead visible lane orcoming see any the coming However no left not hazard to hazards or as accident than pedestrians safety but driver right in path nor pedestrian turn turning flow safe forward and avoid that only speed up slow down stop for now then to keep trajectory lateralfuture future meta behavior lateral: keep lane, future keep speed straight\", \"navigation_command\": \"GO_STRAIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"keep speed\", \"lateral\": \"keep lane\"}, \"trajectory\": \"0.5s: forward=+25.2m, lateral=+00.0m\n1.0s: forward=+25.2m, lateral=+00.0m\n1.5s: forward=+25.2m, lateral=+00.0m\n2.0s: forward=+25.2m, lateral=+00.0m\n2.5s: forward=+25.2m, lateral=+00.0m\n3.0s: forward=+25.2m, lateral=+00.0m\n3.5s: forward=+25.2m, lateral=+00.0m\n4.0s: forward=+55.4m, lateral=+00.0m\n4.5s: forward=+55.2m, lateral=+00.0m\n5.0s: forward=+55.2m, lateral=+00.0m\"}",
+  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"white car\", \"pedestrian\": \"nonehere\", \"cyclist\": \"nonehere\", \"construction\": \"nonehere\", \"traffic_element\": \"street light\", \"weather_condition\": \"darkcast\", \"road_hazard\": \"nonehere\", \"emergency_vehicle\": \"nonehere\", \"animal\": \"nonehere\", \"special_vehicle\": \"nonehere\", \"conflicting_vehicle\": \"nonehere\", \"door_opening_vehicle\": \"nonehere\"}, \"complexity\": \"complex\", \"explanation\": \"The current is a the night of, road and in on.\u6697\u7684\u524d\u591c\u8857\u9053\u8def\u4e0a\u662f\u5728\u5728\u665a\u4e0a\u4e0a\u8def\u706f\u4e2d\u8f66\u706f\u3002\u6765\u7684\u91cc\u4e86\u660e\u8def\u9762\u4e0a\u6709\u4eae\u5149\u7740\u7684?\u6ca1\u6709\u7684\u662f\u6765\u8bed\u9053]?\uff1b\u6211\u662f\u4e0d\u662f\u4e480\u3002\n\uff1a\u5462\ufffd\u5c31\u662f\u5417\u3010\u6211\u662f]\n10\uff1f\u3011\u8fd9\u662f\u662f\uff1a\u4e00\uff0c\ufffd\u4e0e\u662f\u4e00\u4e8e\u6211\u662f\u3010\u4f60\u4e3a\u4e8e\u4e00\u662f\uff0c\u548c\u8fd9\u3002\u6211\u300179\u3011453 21\n\", \"navigation_command\": \"GO_STRAIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"keep speed\", \"lateral\": \"keep lane\"}, \"trajectory\": \"0.5s: forward=+12.6m, lateral=+00.0m\n1.0s: forward=+25.2m, lateral=+00.0m\n1.5s: forward=+35.2m, lateral=+00.0m\n2.0s: forward=+65.2m, lateral=+00.0m\n2.5s: forward=+63.0m, lateral=+00.0m\n3.0s: forward=+15.0m, lateral=+00.0m\n3.5s: forward=+15.0m, lateral=+00.0m\n4.0s: forward=+15.0m, lateral=+00.0m\n4.5s: forward=+15.0m, lateral=+00.0m\n5.0s: forward=+12.0m, lateral=+00.0m\"}",
   "predicted_waypoints_10": [
     [
-      25.2,
+      12.6,
       0.0
     ],
     [
@@ -10,37 +10,37 @@
       0.0
     ],
     [
-      25.2,
+      35.2,
       0.0
     ],
     [
-      25.2,
+      65.2,
       0.0
     ],
     [
-      25.2,
+      63.0,
       0.0
     ],
     [
-      25.2,
+      15.0,
       0.0
     ],
     [
-      25.2,
+      15.0,
       0.0
     ],
     [
-      55.4,
+      15.0,
       0.0
     ],
     [
-      55.2,
+      15.0,
       0.0
     ],
     [
-      55.2,
+      12.0,
       0.0
     ]
   ],
-  "ade_first5_m": 8.887543927159255
+  "ade_first5_m": 21.375204472253987
 }

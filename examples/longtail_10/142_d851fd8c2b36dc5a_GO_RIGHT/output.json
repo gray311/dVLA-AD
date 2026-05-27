@@ -1,46 +1,46 @@
 {
-  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"none car\", \"pedestrian\": \"none person\", \"cyclist\": \" cyclist cyclist\", \"construction\": \"none construction\", \"traffic_element\": \"none light\", \"weather_condition\": \"sunny\", \"road_hazard\": \"none hazard\", \"emergency_vehicle\": \"none vehicle\", \"animal\": \"none animal\", \"special_vehicle\": \"none vehicle\", \"conflicting_vehicle\": \"none vehicle\", \"door_opening_vehicle\": \"none vehicle\"}, \"complexity\": \"simple\", \"explanation\": \"The scene is a typical city street with a few buildings on the left. and no road in The are is clear and there are no pedestrians nearby traffic, or vehicles car There is not visible pedestrian, cyclistist or any other vehicle hazardscoming hazardous road of hazard emergency an safety frame behavior. on the current go Driver driver instructions GOGODriver instruction to turn that lane as the driver's right to driving at speed of keeping speed within path trajectory., lateral 1.50: forward=+0\", \"navigation_command\": \"GO_RIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"keep up\", \"lateral\": \"turn left\"}, \"trajectory\": \"0.5s: forward=+01.5m, lateral=+00.3m\n1.0s: forward=+03.2m, lateral=+00.5m\n1.5s: forward=+04.8m, lateral=+00.3m\n2.0s: forward=+06.4m, lateral=+00.5m\n2.5s: forward=+06.4m, lateral=+00.3m\n3.0s: forward=+08.1m, lateral=+00.3m\n3.5s: forward=+10.8m, lateral=+00.3m\n4.0s: forward=+00.4m, lateral=+00.3m\n4.5s: forward=+00.3m, lateral=+00.3m\n5.0s: forward=+00.3m, lateral=+00.3m\"}",
+  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"none car\", \"pedestrian\": \"none person\", \"cyclist\": \"none cyclist\", \"construction\": \"none zone\", \"traffic_element\": \"orange cone\", \"weather_condition\": \"sunny\", \"road_hazard\": \"none road\", \"emergency_vehicle\": \"none car\", \"animal\": \"none animal\", \"special_vehicle\": \"none car\", \"conflicting_vehicle\": \"none car\", \"door_opening_vehicle\": \"none car\"}, \"complexity\": \"complex\", \"explanation\": \"The scene is the front of a street building,.\u5927\u578b\u5efa\u7b51\u8857\u9053\u5927\u9053\u6709\u680b\u524d\u6b63\u5728\u8857\u8fb9\u4e0a\u4e00\u680b\u6b63\u5728\u5927\u697c\u7a97\u73bb\u7483\u697c\u680b\u5e62\u5927\u53a6\u9ad8\u697c\u6709\u4ec0\u4e48\u90a3\u4e48\u4ec0\u4e48\u4e48?\u8fd9\u4e2a\u4f60\u7684\u4e0d\u4e0b\u9762\uff1f\n\uff1f\u3002\u5417\u5427\u5199\u4ee5\u4e0b\u4e86\uff01\u597d\u7684\u662f\u4e0d\u662f\u8bf7\u5462\u5c31\u662f\u8bf4\u5b57\u5c31\u4e0b\u4e00\u4e0b\uff1f\uff1a]\u5bf9\u597d\u4e00\u4e0b\ufffd\uff1a\u662f\u4e00\u4e00\n\u4f60\u611f\u89c9\u5230\u5230\u6765\u4e00\uff0c\u548c\u662f\u7684\u90a3\u3001\u4e8e3\u6211\u662f\u6211\u3002\u8fd910\u3011 2\n\", \"navigation_command\": \"GO_RIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"speed up\", \"lateral\": \"turn left\"}, \"trajectory\": \"0.5s: forward=+00.6m, lateral=+00.3m\n1.0s: forward=+01.6m, lateral=+00.3m\n1.5s: forward=+01.6m, lateral=+00.8m\n2.0s: forward=+00.8m, lateral=+00.3m\n2.5s: forward=+00.8m, lateral=+00.3m\n3.0s: forward=+00.2m, lateral=+00.3m\n3.5s: forward=+00.6m, lateral=+00.3m\n4.0s: forward=+00.6m, lateral=+00.3m\n4.5s: forward=+00.6m, lateral=+00.3m\n5.0s: forward=+00.6m, lateral=+00.3m\"}",
   "predicted_waypoints_10": [
     [
-      1.5,
+      0.6,
       0.3
     ],
     [
-      3.2,
-      0.5
-    ],
-    [
-      4.8,
+      1.6,
       0.3
     ],
     [
-      6.4,
-      0.5
+      1.6,
+      0.8
     ],
     [
-      6.4,
+      0.8,
       0.3
     ],
     [
-      8.1,
+      0.8,
       0.3
     ],
     [
-      10.8,
+      0.2,
       0.3
     ],
     [
-      0.4,
+      0.6,
       0.3
     ],
     [
-      0.3,
+      0.6,
       0.3
     ],
     [
-      0.3,
+      0.6,
+      0.3
+    ],
+    [
+      0.6,
       0.3
     ]
   ],
-  "ade_first5_m": 2.4365943291438796
+  "ade_first5_m": 2.110412388423005
 }

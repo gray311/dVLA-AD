@@ -122,7 +122,7 @@ def main():
             "image": "CAM_JOINT (stitched 3-cam)",
             "template": "V3 (critical_objects + complexity + explanation + "
                          "behavior + semantic trajectory)",
-            "algorithm": "SGLang HierarchyBlock, 4 steps/chunk",
+            "algorithm": "SGLang HierarchyBlock, section-aligned bs=160, 4 steps/chunk",
         },
     }
     with open(os.path.join(OUT_DIR, "summary.json"), "w") as f:

@@ -1,46 +1,46 @@
 {
-  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"none car\", \"pedestrian\": \"none person\", \"cyclist\": \" cyclist road\", \"construction\": \"none zone\", \"traffic_element\": \"over sky\", \"weather_condition\": \"sunny\", \"road_hazard\": \"none road\", \"emergency_vehicle\": \"none car\", \"animal\": \"none animal\", \"special_vehicle\": \"none vehicle\", \"conflicting_vehicle\": \"none car\", \"door_opening_vehicle\": \"none car\"}, \"complexity\": \"simple\", \"explanation\": \"The scene is a residential street with a palm, no traffic wall and. the sky is driving straight the  speed car of road to there are forward next ahead. lane left in front path right going lateral turn on now. The future up behavior: long go up, slow down keep stop speed lateral keep lane left change right now. trajectory current forwardforward= 10052m, lateral=3468m,ffuture waypoints: forforward+1097m m\", \"navigation_command\": \"GO_STRAIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"speed up\", \"lateral\": \"keep lane\"}, \"trajectory\": \"0.5s: forward=+10.7m, lateral=+00.0m\n1.0s: forward=+27.5m, lateral=+00.0m\n1.5s: forward=+47.3m, lateral=+00.0m\n2.0s: forward=+67.1m, lateral=+00.0m\n2.5s: forward=+87.9m, lateral=+00.0m\n3.0s: forward=+10.7m, lateral=+00.0m\n3.5s: forward=+27.5m, lateral=+00.0m\n4.0s: forward=+77.3m, lateral=+00.0m\n4.5s: forward=+87.1m, lateral=+00.0m\n5.0s: forward=+10.9m, lateral=+00.0m\"}",
+  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"none car\", \"pedestrian\": \"none person\", \"cyclist\": \"none cyclist\", \"construction\": \"wall fence\", \"traffic_element\": \"speed sign\", \"weather_condition\": \"over sky\", \"road_hazard\": \"none road\", \"emergency_vehicle\": \"none car\", \"animal\": \"none animal\", \"special_vehicle\": \"none car\", \"conflicting_vehicle\": \"none car\", \"door_opening_vehicle\": \"none car\"}, \"complexity\": \"simple\", \"explanation\": \"The scene is the front of a street road.\u8857\u9053\u6709\u68d5\u6761\u6811\u548c\u6811\u6728\u5899\u5b50\u8def\u6ca1\u6709\u5728\u4e91\u5929\u3002\u73b0\u5728\u6ca1\u6709\u6ca1\u8f86\u8f666\u5462\u5427\u4e0d\u662f\u4e00\u4e0b\u3002\u524d\u9762\u6211\u662f086\u4e0b\uff1f\u5c31\u662f\u8bf447\u4e0d\u54275.9\u662f\u4e0d\u662f\u662f\u4e0d\u662f\u4e0d\u548c\uff0c54\u6765\u4f60\u96ea03\u5c31\u4e0d\u662f\u662f\u30011\u6253\u4e86\u4e00\u4e86\u4e00\u4e0b\u4e00\u4e0b\n\n\u4e86\u4e86\u90a3\uff0c\u662f\u30013\u4e3a\u96ea\u7684\u4e8e\u8fd9\u6211\u662f\u62111\u3002\u5149 2\u3011\n\", \"navigation_command\": \"GO_STRAIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"keep speed\", \"lateral\": \"keep lane\"}, \"trajectory\": \"0.5s: forward=+03.7m, lateral=+00.0m\n1.0s: forward=+07.5m, lateral=+00.0m\n1.5s: forward=+08.5m, lateral=+00.0m\n2.0s: forward=+37.8m, lateral=+00.0m\n2.5s: forward=+37.8m, lateral=+00.0m\n3.0s: forward=+37.5m, lateral=+00.0m\n3.5s: forward=+37.5m, lateral=+00.0m\n4.0s: forward=+37.5m, lateral=+00.0m\n4.5s: forward=+37.5m, lateral=+00.0m\n5.0s: forward=+37.8m, lateral=+00.0m\"}",
   "predicted_waypoints_10": [
     [
-      10.7,
+      3.7,
       0.0
     ],
     [
-      27.5,
+      7.5,
       0.0
     ],
     [
-      47.3,
+      8.5,
       0.0
     ],
     [
-      67.1,
+      37.8,
       0.0
     ],
     [
-      87.9,
+      37.8,
       0.0
     ],
     [
-      10.7,
+      37.5,
       0.0
     ],
     [
-      27.5,
+      37.5,
       0.0
     ],
     [
-      77.3,
+      37.5,
       0.0
     ],
     [
-      87.1,
+      37.5,
       0.0
     ],
     [
-      10.9,
+      37.8,
       0.0
     ]
   ],
-  "ade_first5_m": 41.65773928879831
+  "ade_first5_m": 12.647459452801218
 }

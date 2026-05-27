@@ -1,46 +1,46 @@
 {
-  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"silver car\", \"pedestrian\": \"none found\", \"cyclist\": \" found found\", \"construction\": \"none found\", \"traffic_element\": \"orange cone\", \"weather_condition\": \"scast\", \"road_hazard\": \"none found\", \"emergency_vehicle\": \"none found\", \"animal\": \"none found\", \"special_vehicle\": \"none found\", \"conflicting_vehicle\": \"none found\", \"door_opening_vehicle\": \"none found\"}, \"complexity\": \"simple\", \"explanation\": \"The scene shows a street with a few road and some trees, with cars parked on the. no objects or pedestrians hazards visible seen in hazard ahead. The driver is driving car at low traffic and following the instructions left turn instruction to go left car current future behavior trajectory lateral speed up down keep will 8 m0 s forward 251: lateral=+4m3m,l608:+7m8l,901:++1ml,125\", \"navigation_command\": \"GO_LEFT\", \"future_meta_behavior\": {\"longitudinal\": \"speed up\", \"lateral\": \"turn left\"}, \"trajectory\": \"0.5s: forward=+04.5m, lateral=+00.3m\n1.0s: forward=+08.4m, lateral=+00.5m\n1.5s: forward=+12.6m, lateral=+00.8m\n2.0s: forward=+16.8m, lateral=+01.1m\n2.5s: forward=+20.0m, lateral=+01.4m\n3.0s: forward=+24.2m, lateral=+01.5m\n3.5s: forward=+28.4m, lateral=+01.8m\n4.0s: forward=+32.6m, lateral=+02.1m\n4.5s: forward=+36.8m, lateral=+02.4m\n5.0s: forward=+41.0m, lateral=+02.4m\"}",
+  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"silver car\", \"pedestrian\": \"none here\", \"cyclist\": \"none here\", \"construction\": \"none cones\", \"traffic_element\": \"none cone\", \"weather_condition\": \"sunny\", \"road_hazard\": \"none road\", \"emergency_vehicle\": \"none vehicle\", \"animal\": \"none here\", \"special_vehicle\": \"none vehicle\", \"conflicting_vehicle\": \"none vehicle\", \"door_opening_vehicle\": \"none here\"}, \"complexity\": \"complex\", \"explanation\": \"The scene is the front of a\u6761\u8857\u9053\u884c\u9a76\u505c\u5728\uff0c\u524d\u8f66\u6709\u4e00\u8f86\u8f86\u8f66\u6c7d\u8f66\u7740\u8def\u65c1\u6811\u6728\u4e24\u9053\u6811\u6709\u662f\u4e00\u8f66\u8f86\u68f5\u6811\u7684\u5efa\u7b51\u8f66\u9053\u4e0a\u4e24\u8fb9\u9053\u7a7a\uff0c\uff0c\u5728\u90a3\ufffd\u505c\u8f66\u573a\u5b50\u91cc\u91cc\uff0c\u90a3\u91cc\u6ca1\u6709\u662f\u4efb\u4f55\u8fd9\u91cc\u91cc\u7684\u6765\u7684\u4e00\u8f86\u591a\u4e09\u51e0\u91cc\u3002\u6211\u662f\u8bf4176\u4eba\u3002\u6765\u4e86\u4e00\u4e00\u5171\u6709\u5c31\u662f\u548c\u6211\u662f\ufffd34\u3001,\n5\u3001\u4e8e\u548c\u662f\u4e86\u4e3a\u6211\u7684 0\u8fd9\u3002\u514912\u3011\n\", \"navigation_command\": \"GO_LEFT\", \"future_meta_behavior\": {\"longitudinal\": \"speed up\", \"lateral\": \"turn left\"}, \"trajectory\": \"0.5s: forward=+04.2m, lateral=+00.3m\n1.0s: forward=+08.4m, lateral=+00.8m\n1.5s: forward=+12.6m, lateral=+00.3m\n2.0s: forward=+16.8m, lateral=+00.8m\n2.5s: forward=+21.1m, lateral=+00.4m\n3.0s: forward=+24.4m, lateral=+00.0m\n3.5s: forward=+12.4m, lateral=+00.0m\n4.0s: forward=+08.6m, lateral=+00.0m\n4.5s: forward=+20.8m, lateral=+00.0m\n5.0s: forward=+24.8m, lateral=+00.0m\"}",
   "predicted_waypoints_10": [
     [
-      4.5,
+      4.2,
       0.3
     ],
     [
       8.4,
-      0.5
-    ],
-    [
-      12.6,
       0.8
     ],
     [
+      12.6,
+      0.3
+    ],
+    [
       16.8,
-      1.1
+      0.8
     ],
     [
-      20.0,
-      1.4
+      21.1,
+      0.4
     ],
     [
-      24.2,
-      1.5
+      24.4,
+      0.0
     ],
     [
-      28.4,
-      1.8
+      12.4,
+      0.0
     ],
     [
-      32.6,
-      2.1
+      8.6,
+      0.0
     ],
     [
-      36.8,
-      2.4
+      20.8,
+      0.0
     ],
     [
-      41.0,
-      2.4
+      24.8,
+      0.0
     ]
   ],
-  "ade_first5_m": 6.129349492640071
+  "ade_first5_m": 6.287863619209193
 }

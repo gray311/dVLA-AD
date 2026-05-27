@@ -1,46 +1,46 @@
 {
-  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"black car\", \"pedestrian\": \"b cyclist\", \"cyclist\": \" cyclist cyclist\", \"construction\": \"none found\", \"traffic_element\": \"green light\", \"weather_condition\": \"sunny\", \"road_hazard\": \"none found\", \"emergency_vehicle\": \"none found\", \"animal\": \"none found\", \"special_vehicle\": \"none found\", \"conflicting_vehicle\": \"none found\", \"door_opening_vehicle\": \"none found\"}, \"complexity\": \"simple\", \"explanation\": \"The scene is a typical residential street with a single cyclist crossing the intersection. The are vehicles clear, traffic no light and hazards visible road the path. The driver instruction to driving instructions is GO right on which matches the current behavior speed 4 keep m and left of lateral lane frame trajectory future go up forward down ahead0m25+frac0-83m, 15s: ahead69-+7frac8-3m, 2: ahead91-6\", \"navigation_command\": \"GO_RIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"speed up\", \"lateral\": \"turn left\"}, \"trajectory\": \"0.5s: forward=+02.5m, lateral=+00.3m\n1.0s: forward=+04.6m, lateral=+00.5m\n1.5s: forward=+06.9m, lateral=+00.7m\n2.0s: forward=+09.2m, lateral=+00.9m\n2.5s: forward=+11.6m, lateral=+01.1m\n3.0s: forward=+13.9m, lateral=+01.3m\n3.5s: forward=+16.2m, lateral=+01.5m\n4.0s: forward=+18.5m, lateral=+01.7m\n4.5s: forward=+20.6m, lateral=+01.9m\n5.0s: forward=+22.8m, lateral=+01.1m\"}",
+  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"black car\", \"pedestrian\": \"none road\", \"cyclist\": \"bist\", \"construction\": \"none zone\", \"traffic_element\": \"light traffic\", \"weather_condition\": \"sunny\", \"road_hazard\": \"none road\", \"emergency_vehicle\": \"none vehicle\", \"animal\": \"none animal\", \"special_vehicle\": \"none_vehicle\", \"conflicting_vehicle\": \"none_vehicle\", \"door_opening_vehicle\": \"none_vehicle\"}, \"complexity\": \"complex\", \"explanation\": \"The scene is a busy residential street,\u8857\u9053\u9a91\u884c\u5728\u5de6\u4fa7\u6761\uff0c\u9053\u8857\u3002\u7eff\u4e00\u9a6c\u8def\u6709\u51e0\u6c7d\u8f66\u8f66\u3001\u7535\u706f\u5b50\u548c\u7ea2\u6811\u6728\u6811\u7269\u4fe1\u53f7\u8def\u706f\u76cf\u7740\u7ea2\u8272\u524d\u706f\uff1b\u4ea4\u901a\u8def\u53e35\u5668\ufffd\u8272][\u8def\u662f[.]\u3010\uff1f1\uff1a\uff1f\n]\n] \u8bed\uff1a\u3011\u6211\u662f\ufffd\u4e00\u4e2a\u8005\uff1f\n\u3010D0\u4f60\u4e8e\u4e86\u90a3\u662f\u548c\uff0c\ufffd3\u8fd9\u96ea\u6211\u7684\u6211\u662f\u68a61\u4e3a\u3002\u5149\u3011 2\n\", \"navigation_command\": \"GO_RIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"speed up\", \"lateral\": \"turn left\"}, \"trajectory\": \"0.5s: forward=+00.3m, lateral=+00.3m\n1.0s: forward=+00.6m, lateral=+00.6m\n1.5s: forward=+00.9m, lateral=+00.3m\n2.0s: forward=+00.9m, lateral=+00.4m\n2.5s: forward=+00.9m, lateral=+00.3m\n3.0s: forward=+00.6m, lateral=+00.3m\n3.5s: forward=+00.6m, lateral=+00.3m\n4.0s: forward=+00.6m, lateral=+00.3m\n4.5s: forward=+00.6m, lateral=+00.3m\n5.0s: forward=+00.6m, lateral=+00.3m\"}",
   "predicted_waypoints_10": [
     [
-      2.5,
+      0.3,
       0.3
     ],
     [
-      4.6,
-      0.5
+      0.6,
+      0.6
     ],
     [
-      6.9,
-      0.7
+      0.9,
+      0.3
     ],
     [
-      9.2,
-      0.9
+      0.9,
+      0.4
     ],
     [
-      11.6,
-      1.1
+      0.9,
+      0.3
     ],
     [
-      13.9,
-      1.3
+      0.6,
+      0.3
     ],
     [
-      16.2,
-      1.5
+      0.6,
+      0.3
     ],
     [
-      18.5,
-      1.7
+      0.6,
+      0.3
     ],
     [
-      20.6,
-      1.9
+      0.6,
+      0.3
     ],
     [
-      22.8,
-      1.1
+      0.6,
+      0.3
     ]
   ],
-  "ade_first5_m": 3.751474207018142
+  "ade_first5_m": 3.4787306761957844
 }

@@ -1,46 +1,46 @@
 {
-  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"white car\", \"pedestrian\": \"none found\", \"cyclist\": \" found here\", \"construction\": \"none found\", \"traffic_element\": \"clear light\", \"weather_condition\": \"overcast\", \"road_hazard\": \"none detected\", \"emergency_vehicle\": \"not seen\", \"animal\": \"none seen\", \"special_vehicle\": \"no bus\", \"conflicting_vehicle\": \"no truck\", \"door_opening_vehicle\": \"no car\"}, \"complexity\": \"simple\", \"explanation\": \"The scene is a typical suburban residential street with no immediate hazards. or vehicles approaching the The road, appears there are few cars and traffic trees white of the car on visible in front distance sky also has a clear light ahead over weather conditions indicating no adverse issuescoming to I driver's TheDriver Driver instructions driving lane right left turnFuturefuture future meta future longitudinal behavior GO_RIGHTward:  speed up3.0 m keep12.50s lateral behavior:  keep --08m\", \"navigation_command\": \"GO_RIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"speed up\", \"lateral\": \"keep left\"}, \"trajectory\": \"0.5s: forward=+01.5m, lateral=+00.3m\n1.0s: forward=+03.4m, lateral=+00.5m\n1.5s: forward=+05.1m, lateral=+00.7m\n2.0s: forward=+06.9m, lateral=+00.9m\n2.5s: forward=+08.6m, lateral=+01.1m\n3.0s: forward=+10.3m, lateral=+01.3m\n3.5s: forward=+12.0m, lateral=+01.5m\n4.0s: forward=+14.7m, lateral=+01.7m\n4.5s: forward=+16.4m, lateral=+01.9m\n5.0s: forward=+18.1m, lateral=+02.1m\"}",
+  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"none car\", \"pedestrian\": \"none person\", \"cyclist\": \"none cyclist\", \"construction\": \"none zone\", \"traffic_element\": \"none cone\", \"weather_condition\": \"overcast\", \"road_hazard\": \"none hazard\", \"emergency_vehicle\": \"none vehicle\", \"animal\": \"none animal\", \"special_vehicle\": \"truck truck\", \"conflicting_vehicle\": \"none car\", \"door_opening_vehicle\": \"none car\"}, \"complexity\": \"complex\", \"explanation\": \"The scene is the residential\u8857\u9053\uff0c\u6709\u6761\u4e0d\u8def\u6811\u623f\u5c4b\u4e24\u623f\u5b50\u68d5\u6811\u6728\u68f5\u6811\u7eff\u8349\u505c\u8f86\u6c7d\u8f66\u7740\u767d\u8272\u706f\u4e0a\u6ca1\u6709\u6ca1\u6709\u9053\u724c\u6216\u7269\u8f66\u4eba\u6765\u7684\u65e0\u5462\u6ca1\u591a\u5c0f\u95e8\u5b50\u4eec\uff1a\u68d5\u6a59\u5b50\u3001\u6765\u5427\u4e0b\u662f\u4e0d\u662f\uff1f\ufffd\u57283.\u90a3\u4e2a1\u4e00\u548c0,\u90a3\u4e48]\u4f60\u6211\u662f\u8bf4\u60f3\u5199\u4e00\u4e0b\u4e00\u4e0b\u5e74\u96ea\n\u3002\u767d\u51b0\u96ea\uff0c\u8fd9\u4e2a\u3001\u4e86\u90a3\u662f\u7684\u4e8e\u6211\u6211\u662f\u8fd91\u30022 \n\n\n\u3011\n\", \"navigation_command\": \"GO_RIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"speed up\", \"lateral\": \"turn right\"}, \"trajectory\": \"0.5s: forward=+00.7m, lateral=+00.3m\n1.0s: forward=+01.4m, lateral=+00.8m\n1.5s: forward=+01.1m, lateral=+00.3m\n2.0s: forward=+00.9m, lateral=+00.8m\n2.5s: forward=+00.6m, lateral=+00.8m\n3.0s: forward=+00.7m, lateral=+00.0m\n3.5s: forward=+00.7m, lateral=+00.0m\n4.0s: forward=+00.7m, lateral=+00.0m\n4.5s: forward=+00.6m, lateral=+00.0m\n5.0s: forward=+00.7m, lateral=+00.0m\"}",
   "predicted_waypoints_10": [
     [
-      1.5,
+      0.7,
       0.3
     ],
     [
-      3.4,
-      0.5
+      1.4,
+      0.8
     ],
     [
-      5.1,
-      0.7
+      1.1,
+      0.3
     ],
     [
-      6.9,
-      0.9
+      0.9,
+      0.8
     ],
     [
-      8.6,
-      1.1
+      0.6,
+      0.8
     ],
     [
-      10.3,
-      1.3
+      0.7,
+      0.0
     ],
     [
-      12.0,
-      1.5
+      0.7,
+      0.0
     ],
     [
-      14.7,
-      1.7
+      0.7,
+      0.0
     ],
     [
-      16.4,
-      1.9
+      0.6,
+      0.0
     ],
     [
-      18.1,
-      2.1
+      0.7,
+      0.0
     ]
   ],
-  "ade_first5_m": 2.834922056438965
+  "ade_first5_m": 2.290402333473999
 }
