@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+*.so
+*.o
+build/
+dist/
+.ipynb_checkpoints/
+.cache/
+results/**/*.json
+results/**/*.md
