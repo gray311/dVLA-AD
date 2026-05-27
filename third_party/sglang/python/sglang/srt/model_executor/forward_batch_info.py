@@ -288,6 +288,13 @@ class ForwardBatch:
     # Global forbidden tokens applied at every MASKED position (in addition to
     # any per-position gate allowlist). Use for JSON-meta blacklist.
     dllm_template_forbidden_token_ids: Optional[List[int]] = None
+    # Local positions within the current chunk that have rep-penalty applied.
+    # Sliced from the full per-req list using chunk_offset.
+    dllm_template_rep_penalty_chunk_positions: Optional[List[int]] = None
+    # Rep penalty strength (logit subtract per existing commit).
+    dllm_template_rep_penalty: float = 0.0
+    # Fixed-step budget for template mode.
+    dllm_template_steps_per_chunk: int = 4
 
     # For extend
     extend_num_tokens: Optional[int] = None
@@ -528,6 +535,22 @@ class ForwardBatch:
                 ret.dllm_template_forbidden_token_ids = (
                     batch.dllm_template_forbidden_token_ids[0]
                 )
+            # Slice rep-penalty positions for the current chunk.
+            if (batch.dllm_template_rep_penalty_positions
+                    and batch.dllm_template_rep_penalty_positions[0] is not None):
+                full_rep = batch.dllm_template_rep_penalty_positions[0]
+                offset = (batch.dllm_template_chunk_offsets[0]
+                          if batch.dllm_template_chunk_offsets else 0)
+                # Filter positions within [offset, offset+block_size), map to local.
+                chunk_local = [
+                    p - offset for p in full_rep
+                    if offset <= p < offset + block_size
+                ]
+                ret.dllm_template_rep_penalty_chunk_positions = chunk_local
+            if batch.dllm_template_rep_penalty:
+                ret.dllm_template_rep_penalty = batch.dllm_template_rep_penalty[0]
+            if batch.dllm_template_steps_per_chunk:
+                ret.dllm_template_steps_per_chunk = batch.dllm_template_steps_per_chunk[0]
         elif (
             ret.spec_info is not None
             and getattr(ret.spec_info, "positions", None) is not None

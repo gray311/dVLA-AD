@@ -62,6 +62,9 @@ class SamplingParams:
         dllm_template_token_ids: Optional[List[int]] = None,
         dllm_template_position_gates: Optional[List[Optional[List[int]]]] = None,
         dllm_template_forbidden_token_ids: Optional[List[int]] = None,
+        dllm_template_rep_penalty_positions: Optional[List[int]] = None,
+        dllm_template_rep_penalty: float = 2.0,
+        dllm_template_steps_per_chunk: int = 4,
     ) -> None:
         self.max_new_tokens = max_new_tokens
         self.stop_strs = stop
@@ -108,6 +111,18 @@ class SamplingParams:
         # blacklist (`"`, `}`, `\`, etc.) so that even free-text slots like
         # critical_object values cannot emit JSON-breaking chars.
         self.dllm_template_forbidden_token_ids = dllm_template_forbidden_token_ids
+        # Template positions where a repetition penalty is applied (e.g.,
+        # explanation slots). Stored as positions into dllm_template_token_ids
+        # (NOT block-local). The algorithm tracks committed tokens across all
+        # chunks and penalizes their re-commit at any rep position by
+        # `dllm_template_rep_penalty * count_so_far`. Prevents long-mask
+        # cascades like "a a a a" / "the the the".
+        self.dllm_template_rep_penalty_positions = dllm_template_rep_penalty_positions
+        self.dllm_template_rep_penalty = dllm_template_rep_penalty
+        # Fixed step count per chunk in template mode. Larger N = more
+        # iterations = better quality but slower. Default 4 matches the
+        # transformers loader.
+        self.dllm_template_steps_per_chunk = dllm_template_steps_per_chunk
         # In template mode, the model is allowed to commit EOS at "soft-end"
         # slots (e.g., critical_object tail after "none"). We must NOT let
         # those EOS tokens terminate the response — the full scaffold needs

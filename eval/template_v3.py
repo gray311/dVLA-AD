@@ -198,13 +198,16 @@ OUTPUT FORMAT REQUIREMENTS:
 
 4. future_meta_behavior.lateral: same 2-word format.
    - verb (2 words, pick ONE phrase) in {{"keep lane", "turn left", "turn right", "change left", "change right"}}
-   - IMPORTANT: lateral verb MUST match the Driver instruction:
-     * "GO_LEFT"     → "turn left"
-     * "GO_RIGHT"    → "turn right"
-     * "GO_STRAIGHT" → "keep lane"
+   - The Driver instruction is a HIGH-LEVEL hint, not a hard rule. The
+     lateral verb should usually follow it (`GO_LEFT`→`turn left`,
+     `GO_RIGHT`→`turn right`, `GO_STRAIGHT`→`keep lane`) — BUT if the
+     current frame shows a hazard (pedestrian in turning path, oncoming
+     vehicle, blocked lane, imminent collision, etc.) that makes
+     following the nav unsafe within the next 5 s, pick the lateral
+     verb that the EGO ACTUALLY NEEDS to execute instead. Local scene
+     safety overrides the high-level nav.
 
 5. trajectory: 10 future ego waypoints at 0.5 s spacing (t = 0.5, 1.0, ... 5.0 s),
-   formatted exactly as "<sign><tens><ones>.<frac>,<sign><tens><ones>.<frac>;..."
    in meters in the ego frame (x = forward, y = left). Each coordinate has a
    sign (`+`/`-`), two integer digits, and ONE decimal place — e.g.
    "+05.0,+00.0;+10.0,+00.0;...+50.0,+00.0". 10 waypoints separated by `;`.

@@ -274,6 +274,13 @@ def generate(bundle, image_paths, question, max_new_tokens=None, temperature=0.0
     if max_new_tokens is None:
         max_new_tokens = n_template
 
+    # Mark explanation positions for rep-penalty. Without this, the
+    # 100-mask explanation slot mode-collapses into "a a a a..." or
+    # "the the the..." at high mask density.
+    rep_positions = [
+        local_pos for local_pos, kind in slot_info if kind == "explanation"
+    ]
+
     sampling = {
         "max_new_tokens": max_new_tokens,
         "temperature": temperature,
@@ -283,6 +290,16 @@ def generate(bundle, image_paths, question, max_new_tokens=None, temperature=0.0
         # values, explanation prose): no token containing `"`, `}`, `\`, etc.
         # Without this, free-text slots emit `","` mid-value and corrupt JSON.
         "dllm_template_forbidden_token_ids": json_bad,
+        # Cross-chunk repetition tracking at explanation positions. Each
+        # committed token is penalized at remaining explanation masks by
+        # rep_penalty * count_so_far. Plus within-step dedup ensures top-K
+        # commits in one step pick distinct tokens.
+        "dllm_template_rep_penalty_positions": rep_positions,
+        "dllm_template_rep_penalty": 2.0,
+        # Fixed 4 steps per chunk (matches transformers loader). Total
+        # forwards ≈ 13 chunks × 4 = 52 (vs ~80-100 with the prior while
+        # loop). Halves SGLang template latency to match transformers path.
+        "dllm_template_steps_per_chunk": 4,
     }
 
     torch.cuda.synchronize()

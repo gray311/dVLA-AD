@@ -35,6 +35,9 @@ class HierarchyBlock(DllmAlgorithm):
         self.last_inherited_token = None
         self.last_block_end_position = None
         self.tokenizer = None
+        # Cross-chunk repetition counts for template-mode rep-penalty
+        # positions. Reset on new request.
+        self.rep_token_counts = None
 
     @staticmethod
     def _set_attention_type(model_runner: ModelRunner, attn_type: AttentionType):
@@ -105,6 +108,7 @@ class HierarchyBlock(DllmAlgorithm):
                 is_new_request = True
                 self.last_inherited_token = None
                 self.last_block_end_position = None
+                self.rep_token_counts = None
 
         # Handle token inheritance for all-mask blocks (skip in template mode —
         # template scaffold at position 0 must stay intact; if position 0 IS a
@@ -134,8 +138,190 @@ class HierarchyBlock(DllmAlgorithm):
         gate_block_active = None
         forbidden_mask = None
 
-        # Process sub-blocks
-        for sub_idx in range(num_sub_blocks):
+        # ============================================================
+        # TEMPLATE-MODE PATH: fixed-step chunk-level diffusion.
+        # Matches the transformers loader: N steps, top-K budget, plus
+        # cross-step rep penalty + within-step token dedup at rep positions.
+        # Skips sub-block iteration — Fast-dVLM's bidir attention within
+        # block already gives all positions full visibility.
+        # ============================================================
+        if is_template_mode:
+            rep_chunk_pos_list = getattr(
+                forward_batch, "dllm_template_rep_penalty_chunk_positions", None,
+            ) or []
+            rep_penalty = getattr(forward_batch, "dllm_template_rep_penalty", 0.0)
+            n_steps = max(1, getattr(forward_batch, "dllm_template_steps_per_chunk", 4))
+
+            chunk_mask = forward_batch.input_ids == self.mask_id
+            n_mask_chunk = int(chunk_mask.sum().item())
+
+            if n_mask_chunk > 0:
+                # Pre-distribute commit budget across n_steps so all masks
+                # get committed by the last step. Same as transformers loader.
+                base = max(1, n_mask_chunk // n_steps)
+                remainder = n_mask_chunk % n_steps
+                budget = [base + (1 if i < remainder else 0) for i in range(n_steps)]
+                # Trim trailing zero-budget steps.
+                while budget and budget[-1] == 0:
+                    budget.pop()
+
+                rep_chunk_pos_set = set(rep_chunk_pos_list)
+
+                for step_idx, k in enumerate(budget):
+                    cur_mask = forward_batch.input_ids == self.mask_id
+                    if not cur_mask.any():
+                        break
+                    out = model_runner.forward(forward_batch, pp_proxy_tensors=None)
+                    logits_output, can_run_cuda_graph = (
+                        out.logits_output, out.can_run_graph,
+                    )
+                    full_logits = logits_output.full_logits
+                    assert full_logits is not None
+
+                    if self.token_shift > 0:
+                        shifted = torch.cat([full_logits[:1], full_logits[:-1]], dim=0)
+                    else:
+                        shifted = full_logits
+
+                    vocab_size = shifted.shape[-1]
+                    device = shifted.device
+
+                    # Build masks lazily (first step) and reuse across steps.
+                    if forbidden_ids and forbidden_mask is None:
+                        forbidden_mask = torch.zeros(vocab_size, dtype=torch.bool, device=device)
+                        for bid in forbidden_ids:
+                            if 0 <= bid < vocab_size:
+                                forbidden_mask[bid] = True
+                    if chunk_gates is not None and gate_block_keep is None:
+                        block_size = forward_batch.input_ids.shape[0]
+                        gate_block_keep = torch.ones(
+                            (block_size, vocab_size), dtype=torch.bool, device=device,
+                        )
+                        gate_block_active = torch.zeros(
+                            block_size, dtype=torch.bool, device=device,
+                        )
+                        for lp, allowed in enumerate(chunk_gates):
+                            if allowed is None or lp >= block_size:
+                                continue
+                            gate_block_active[lp] = True
+                            keep = torch.zeros(vocab_size, dtype=torch.bool, device=device)
+                            for aid in allowed:
+                                if 0 <= aid < vocab_size:
+                                    keep[aid] = True
+                            gate_block_keep[lp] = keep
+
+                    # Apply forbidden mask globally.
+                    if forbidden_mask is not None:
+                        shifted[:, forbidden_mask] = float("-inf")
+                    # Apply per-position gates.
+                    if gate_block_active is not None and gate_block_active.any():
+                        block_minf = torch.full_like(shifted, float("-inf"))
+                        restricted = torch.where(gate_block_keep, shifted, block_minf)
+                        shifted = torch.where(
+                            gate_block_active.unsqueeze(-1), restricted, shifted,
+                        )
+
+                    # Cross-step rep penalty at rep positions.
+                    if (rep_penalty > 0 and rep_chunk_pos_list
+                            and self.rep_token_counts is not None
+                            and self.rep_token_counts.numel() == vocab_size):
+                        rep_pos_t = torch.tensor(
+                            rep_chunk_pos_list, dtype=torch.long, device=device,
+                        )
+                        shifted[rep_pos_t] -= rep_penalty * self.rep_token_counts.unsqueeze(0)
+                    if (rep_penalty > 0 and rep_chunk_pos_list
+                            and self.rep_token_counts is None):
+                        self.rep_token_counts = torch.zeros(
+                            vocab_size, dtype=torch.float, device=device,
+                        )
+
+                    preds = shifted.argmax(dim=-1)
+                    probs = F.softmax(shifted, dim=-1)
+                    conf = probs.gather(dim=-1, index=preds.unsqueeze(-1)).squeeze(-1)
+                    # Restrict transfer candidates to currently-masked positions.
+                    conf = torch.where(
+                        cur_mask, conf, torch.tensor(-np.inf, device=device),
+                    )
+                    k_actual = min(k, int(cur_mask.sum().item()))
+                    if k_actual <= 0:
+                        continue
+                    topk_idx = torch.topk(conf, k_actual).indices
+
+                    # Within-step dedup at rep positions: ensure no two
+                    # rep-position commits share the same token in this step.
+                    if rep_chunk_pos_set and topk_idx.numel() > 1:
+                        rep_in_top = [
+                            int(p) for p in topk_idx.tolist()
+                            if int(p) in rep_chunk_pos_set
+                        ]
+                        if len(rep_in_top) > 1:
+                            # Sort by confidence descending.
+                            rep_in_top.sort(
+                                key=lambda lp: -float(conf[lp].item()),
+                            )
+                            claimed = set()
+                            minus_inf = float("-inf")
+                            for lp in rep_in_top:
+                                cur_tok = int(preds[lp].item())
+                                if cur_tok not in claimed:
+                                    claimed.add(cur_tok)
+                                    continue
+                                # Pick the best alternative not in claimed.
+                                row = shifted[lp].clone()
+                                for t in claimed:
+                                    row[t] = minus_inf
+                                new_tok = int(row.argmax().item())
+                                preds[lp] = new_tok
+                                claimed.add(new_tok)
+
+                    # Commit.
+                    forward_batch.input_ids[topk_idx] = preds[topk_idx]
+
+                    # Update rep counts for newly-committed rep positions.
+                    if rep_penalty > 0 and rep_chunk_pos_set and self.rep_token_counts is not None:
+                        for p in topk_idx.tolist():
+                            if int(p) in rep_chunk_pos_set:
+                                tok = int(forward_batch.input_ids[int(p)].item())
+                                if 0 <= tok < self.rep_token_counts.shape[0]:
+                                    self.rep_token_counts[tok] += 1.0
+
+                # If any masks remain (shouldn't happen with correct budget),
+                # force-commit them in a final pass.
+                cur_mask = forward_batch.input_ids == self.mask_id
+                if cur_mask.any():
+                    out = model_runner.forward(forward_batch, pp_proxy_tensors=None)
+                    logits_output, can_run_cuda_graph = (
+                        out.logits_output, out.can_run_graph,
+                    )
+                    full_logits = logits_output.full_logits
+                    if self.token_shift > 0:
+                        shifted = torch.cat([full_logits[:1], full_logits[:-1]], dim=0)
+                    else:
+                        shifted = full_logits
+                    if forbidden_mask is not None:
+                        shifted[:, forbidden_mask] = float("-inf")
+                    if gate_block_active is not None and gate_block_active.any():
+                        block_minf = torch.full_like(shifted, float("-inf"))
+                        restricted = torch.where(gate_block_keep, shifted, block_minf)
+                        shifted = torch.where(
+                            gate_block_active.unsqueeze(-1), restricted, shifted,
+                        )
+                    preds = shifted.argmax(dim=-1)
+                    forward_batch.input_ids = torch.where(
+                        cur_mask, preds, forward_batch.input_ids,
+                    )
+            else:
+                # All scaffold, no masks — single forward to advance KV cache.
+                out = model_runner.forward(forward_batch, pp_proxy_tensors=None)
+                logits_output, can_run_cuda_graph = (
+                    out.logits_output, out.can_run_graph,
+                )
+        else:
+            # === Original non-template path: sub-block iteration. ===
+            pass
+
+        # Process sub-blocks (non-template path only)
+        for sub_idx in range(num_sub_blocks if not is_template_mode else 0):
             rel_start = sub_idx * self.sub_block_size
             rel_end = rel_start + self.sub_block_size
 
