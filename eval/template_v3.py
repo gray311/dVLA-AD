@@ -68,13 +68,13 @@ def build_template_v3() -> str:
     behavior_str = f"{MASK} {MASK}"
     obj = {
         "critical_objects": co,
+        "complexity": MASK,
         "explanation": MASK * N_EXPLANATION_TOKENS,
         "future_meta_behavior": {
             "longitudinal": behavior_str,
             "lateral": behavior_str,
         },
         "trajectory": MASK * N_TRAJECTORY_TOKENS,
-        "complexity": MASK,
     }
     return json.dumps(obj, separators=(", ", ": "), ensure_ascii=False)
 
@@ -113,7 +113,16 @@ def build_template_ids_v3(tokenizer, mask_id: int):
             ids.append(mask_id)
         critical_pairs.append((head_pos, tail_positions))
         ids += enc('"')
-    ids += enc('}, "explanation": "')
+    # Complexity tag (1 mask token, gated to {"simple","complex"}). Placed
+    # right after critical_objects so the model can use the just-committed
+    # category values to inform the complexity judgement, AND so a "complex"
+    # commit cascades into the subsequent explanation + behavior decisions.
+    # (Empirically this gives better behavior on hazard scenes vs putting
+    # complexity at the template tail — verified on examples/test_image.png.)
+    ids += enc('}, "complexity": "')
+    slots.append((len(ids), "complexity"))
+    ids.append(mask_id)
+    ids += enc('", "explanation": "')
     add_masks(N_EXPLANATION_TOKENS, "explanation")
     # Behavior fields: each is just the 2-word verb "verb_w1 verb_w2" (2 masks
     # with a fixed scaffold space between them).
@@ -148,13 +157,6 @@ def build_template_ids_v3(tokenizer, mask_id: int):
         slots.append((len(ids), "traj_ones"));  ids.append(mask_id)
         ids += enc('.')
         slots.append((len(ids), "traj_frac"));  ids.append(mask_id)
-    # Complexity tag: placed AFTER trajectory so it doesn't shift the
-    # behavior / trajectory mask chunk-boundaries that the model is
-    # sensitive to. The model judges complexity from the now-committed
-    # critical_objects + explanation context (via KV cache).
-    ids += enc('", "complexity": "')
-    slots.append((len(ids), "complexity"))
-    ids.append(mask_id)
     ids += enc('"}')
     return ids, slots, critical_pairs
 
