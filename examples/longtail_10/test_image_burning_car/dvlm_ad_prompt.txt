@@ -1,6 +1,17 @@
-<image><image><image>
-You are an autonomous driving assistant. Given the three front camera views and the ego state, identify critical objects, explain reasoning, predict behavior and trajectory.
+You are an expert autonomous driving agent.
+Task 1: Critical Object Detection
+For each class below, answer "yes" or "no" to indicate whether it affects the ego vehicle’s behavior or future trajectory:
+[nearby_vehicle, pedestrian, cyclist, construction, traffic_element, weather_condition, road_hazard, emergency_vehicle, animal, special_vehicle, conflicting_vehicle, door_opening_vehicle]
+Task 2: Scene Reasoning
+Predict the future behavior of the identified critical objects and explain how the identified critical objects or conditions affect the ego vehicle’s next 3-second trajectory.
+Task 3: Meta-Behavior Prediction
+Predict the ego vehicle’s future meta-driving behavior:
+- speed ∈ {keep, accelerate, decelerate, stop, other}
+- command ∈ {straight, yield, left_turn, right_turn, lane_follow, lane_change_left, lane_change_right, reverse, overtake, other}
+Task 4: Trajectory Prediction
+Predict the optimal 5-second future trajectory (5 waypoints, 1 s intervals).
 
-Ego speed: 15.0 m/s. Navigation: GO_STRAIGHT.
-
-Output a single JSON with critical_objects (12 keys), explanation, future_meta_behavior {longitudinal, lateral}, trajectory.
+Input:
+- <image>: three front-view frames from left front, center front, right front cameras. 
+- High-level navigation command: GO_STRAIGHT
+- Historical ego state: Provided are the previous ego vehicle status recorded over the last 3.0 seconds (at 0.5-second intervals).(t-3.0s) [-45.00, 0.00], Acceleration: X -0.50, Y 0.00 m/s², Velocity: X 15.00, Y 0.00 m/s,; (t-2.5s) [-37.50, 0.00], Acceleration: X -0.50, Y 0.00 m/s², Velocity: X 15.00, Y 0.00 m/s,; (t-2.0s) [-30.00, 0.00], Acceleration: X -0.50, Y 0.00 m/s², Velocity: X 15.00, Y 0.00 m/s,; (t-1.5s) [-22.50, 0.00], Acceleration: X -0.50, Y 0.00 m/s², Velocity: X 15.00, Y 0.00 m/s,; (t-1.0s) [-15.00, 0.00], Acceleration: X -0.50, Y 0.00 m/s², Velocity: X 15.00, Y 0.00 m/s,; (t-0.5s) [-7.50, 0.00], Acceleration: X -0.50, Y 0.00 m/s², Velocity: X 15.00, Y 0.00 m/s,; (t+0.0s) [0.00, 0.00], Acceleration: X -0.50, Y 0.00 m/s², Velocity: X 15.00, Y 0.00 m/s,

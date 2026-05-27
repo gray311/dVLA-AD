@@ -24,7 +24,20 @@ from eval.template_v3 import build_prompt_v3, parse_filled, build_template_v3, P
 
 OUT_DIR = os.path.join(ROOT, "examples", "longtail_10", "test_image_burning_car")
 IMG = os.path.join(ROOT, "examples", "test_image.png")
-META_SRC = os.path.join(ROOT, "examples", "test_image_run", "meta.json")
+
+# Mock ego state for the burning-car OOD scene (test_image.png is NOT a
+# Waymo sample, so we synthesize a plausible state).
+MOCK_META = {
+    "image": IMG,
+    "scenario": "Highway, vehicle on fire ahead, orange cones diverting "
+                "traffic. Ego cruising at 15 m/s, lightly decelerating, "
+                "nav=GO_STRAIGHT.",
+    "mock_speed_m_s": 15.0,
+    "mock_accel_m_s2": -0.5,
+    "mock_nav": "GO_STRAIGHT",
+    "note": "test_image.png is not a Waymo sample; ego state is synthesized "
+            "for an OOD hazard scene.",
+}
 
 
 def _build_mock_sample(meta):
@@ -50,35 +63,62 @@ def _build_mock_sample(meta):
 
 
 def _build_dvlm_ad_prompt_template(sample):
-    """Compose a Waymo-style conversations[0/1] pair for the mock sample
-    (since test_image isn't a Waymo sample so we can't pull from data
-    file). Mirrors the dVLM-AD training format: prompt asks for the same
-    fields, template has <|mdm_mask|> markers."""
+    """Compose conversations[0/1] for the mock sample using the EXACT
+    schema dVLM-AD was finetuned on. We borrow the prompt + template
+    verbatim from a Waymo sample (any one of the 479 — they all share
+    the same template structure, only the historical state differs);
+    then we substitute in our mock ego state in the prompt text.
+
+    Result: dVLM-AD receives input in its training distribution.
+    """
+    DATA = "/weka/home/ext-yingzima/scratchcxiao13/yingzi/workspace/dvlm/dvlm-ad_waymo_e2e_val_cot.json"
+    canon = json.load(open(DATA))[0]  # any sample works for the template
+    template_str = canon["conversations"][1]["value"]
+
+    # Build a mock historical-state block in the data-file's exact format:
+    # "(t-3.0s) [x, y], Acceleration: X ax, Y ay m/s², Velocity: X vx, Y vy m/s,; ..."
     speed = sample["velocity"][-1][0]
+    accel = sample["acceleration"][-1][0]
     nav = sample["navigation_command"]
+    # 7 history points at 0.5 s spacing (3.0 s back to now), straight cruise.
+    history_lines = []
+    for k, t in enumerate([-3.0, -2.5, -2.0, -1.5, -1.0, -0.5, 0.0]):
+        x = speed * t        # ego frame: ego currently at (0,0), past x < 0
+        history_lines.append(
+            f"(t{t:+.1f}s) [{x:.2f}, 0.00], "
+            f"Acceleration: X {accel:.2f}, Y 0.00 m/s², "
+            f"Velocity: X {speed:.2f}, Y 0.00 m/s,"
+        )
+    hist_str = "; ".join(history_lines)
+
     user_text = (
-        "<image><image><image>\n"
-        "You are an autonomous driving assistant. Given the three front "
-        "camera views and the ego state, identify critical objects, "
-        "explain reasoning, predict behavior and trajectory.\n\n"
-        f"Ego speed: {speed:.1f} m/s. Navigation: {nav}.\n\n"
-        "Output a single JSON with critical_objects (12 keys), explanation, "
-        "future_meta_behavior {longitudinal, lateral}, trajectory."
-    )
-    # 12 critical categories, similar to V3
-    cats = ["nearby_vehicle", "pedestrian", "cyclist", "construction",
-             "traffic_element", "weather_condition", "road_hazard",
-             "emergency_vehicle", "animal", "special_vehicle",
-             "conflicting_vehicle", "door_opening_vehicle"]
-    mask = "<|mdm_mask|>"
-    co_lines = ", ".join([f'"{c}": "<|mdm_start|>{mask * 10}<|mdm_end|>"' for c in cats])
-    template_str = (
-        '{"critical_objects": {' + co_lines + '}, '
-        f'"explanation": "<|mdm_start|>{mask * 100}<|mdm_end|>", '
-        '"future_meta_behavior": {'
-        f'"longitudinal": "<|mdm_start|>{mask * 5}<|mdm_end|>", '
-        f'"lateral": "<|mdm_start|>{mask * 5}<|mdm_end|>"}}, '
-        f'"trajectory": "<|mdm_start|>{mask * 100}<|mdm_end|>"}}'
+        "You are an expert autonomous driving agent.\n"
+        "Task 1: Critical Object Detection\n"
+        "For each class below, answer \"yes\" or \"no\" to indicate whether it "
+        "affects the ego vehicle’s behavior or future trajectory:\n"
+        "[nearby_vehicle, pedestrian, cyclist, construction, traffic_element, "
+        "weather_condition, road_hazard, emergency_vehicle, animal, "
+        "special_vehicle, conflicting_vehicle, door_opening_vehicle]\n"
+        "Task 2: Scene Reasoning\n"
+        "Predict the future behavior of the identified critical objects and "
+        "explain how the identified critical objects or conditions affect the "
+        "ego vehicle’s next 3-second trajectory.\n"
+        "Task 3: Meta-Behavior Prediction\n"
+        "Predict the ego vehicle’s future meta-driving behavior:\n"
+        "- speed ∈ {keep, accelerate, decelerate, stop, other}\n"
+        "- command ∈ {straight, yield, left_turn, right_turn, lane_follow, "
+        "lane_change_left, lane_change_right, reverse, overtake, other}\n"
+        "Task 4: Trajectory Prediction\n"
+        "Predict the optimal 5-second future trajectory (5 waypoints, "
+        "1 s intervals).\n"
+        "\n"
+        "Input:\n"
+        "- <image>: three front-view frames from left front, center front, "
+        "right front cameras. \n"
+        f"- High-level navigation command: {nav}\n"
+        f"- Historical ego state: Provided are the previous ego vehicle "
+        f"status recorded over the last 3.0 seconds (at 0.5-second intervals)."
+        f"{hist_str}"
     )
     return user_text, template_str
 
@@ -231,8 +271,8 @@ def main():
     # Copy image
     shutil.copy(IMG, os.path.join(OUT_DIR, "test_image.png"))
 
-    # Copy meta
-    meta = json.load(open(META_SRC))
+    # Write meta
+    meta = MOCK_META
     with open(os.path.join(OUT_DIR, "meta.json"), "w") as f:
         json.dump(meta, f, indent=2)
 

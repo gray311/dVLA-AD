@@ -4,5 +4,5 @@
   "mock_speed_m_s": 15.0,
   "mock_accel_m_s2": -0.5,
   "mock_nav": "GO_STRAIGHT",
-  "note": "Mock ego state (test_image.png is not a Waymo sample)."
+  "note": "test_image.png is not a Waymo sample; ego state is synthesized for an OOD hazard scene."
 }
