@@ -150,7 +150,7 @@ INPUT:
 - Multi-view images: front-left, front, front-right
 - Ego state: speed={speed:.1f} m/s, longitudinal acceleration={accel:.2f} m/s^2
 - Driver instruction: {instruction}
-- Past 1.5 s of ego positions (x forward, y left, meters):
+- Past 3.0 s of ego positions at 0.5 s spacing (x forward, y left, meters):
   {history}
 
 TASK:
@@ -222,7 +222,20 @@ verbatim):
 
 
 def build_prompt_v3(sample: dict) -> str:
-    hist = sample["history waypoints"]
+    # Waymo stores history at 0.1 s spacing across 1.5 s (16 points,
+    # t=-1.5..0). The V3 spec wants 3 s of history at 0.5 s spacing
+    # (7 points, t=-3..0). When only 16 points (1.5 s) are available we
+    # downsample to every-0.5 s (every 5th point) → 4 points covering 1.5 s.
+    # When the sample supplies a longer history (e.g. 30+ points covering
+    # 3 s), we still take every 5th tail point and cap at 7.
+    raw_hist = sample["history waypoints"]
+    n = len(raw_hist)
+    # Step = 5 points per 0.5 s (Waymo's 0.1 s spacing). Take the last
+    # 7 such samples (most recent 3 s) including t=0.
+    step = 5
+    end = n - 1
+    idxs = list(range(end, -1, -step))[:7][::-1]
+    hist = [raw_hist[i] for i in idxs]
     hist_str = "; ".join(f"({p[0]:.2f}, {p[1]:.2f})" for p in hist)
     vx, vy = sample["velocity"][-1]
     speed = math.hypot(vx, vy)
