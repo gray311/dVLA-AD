@@ -1,0 +1,92 @@
+You are an autonomous driving assistant. Given the current driving scene, identify critical objects, explain your reasoning, then predict the future driving behavior and trajectory.
+
+INPUT:
+- Multi-view images: front-left, front, front-right
+- Ego state: speed=5.7 m/s, longitudinal acceleration=-0.18 m/s^2
+- Driver instruction: GO_LEFT
+- Past 3.0 s of ego positions at 0.5 s spacing (x forward, y left, meters):
+  (-28.35, 3.78); (-17.56, 2.19); (-7.95, 0.71); (0.00, 0.00)
+
+TASK:
+Fill in the masked positions in the following JSON template.
+
+OUTPUT FORMAT REQUIREMENTS:
+
+1. critical_objects: For each of the 12 categories, fill EXACTLY 2 tokens:
+   - If the category does NOT exist in the scene: fill "none" (or "none" + 1 pad).
+   - If it DOES exist: fill a SHORT referring expression (max 2 tokens, e.g.
+     "black car", "green light", "orange cone", "overcast sky"). Keep it tight —
+     do NOT introduce new JSON keys inside the slot.
+
+2. complexity: ONE token — exactly one of {"simple", "complex"}.
+   - "simple": low-traffic, no hazards, predictable surroundings (empty
+     residential street, clear highway, single lead car in calm flow).
+   - "complex": ANY of — multiple interacting agents (≥3 nearby vehicles
+     or pedestrians/cyclists in path), an unfolding hazard (accident
+     ahead, fire / smoke, blocked lane, debris, oncoming emergency
+     vehicle), construction zones with lane shifts, complex
+     intersections with mixed traffic, or anything that should signal
+     "give this frame extra planning attention".
+
+3. explanation: ~100 tokens describing the scene, salient objects, and how
+   they shape your planned action. Write naturally — no fixed template, no
+   numbered headings. A useful explanation usually grounds in the visible
+   scene (road type, weather, what other agents are doing) and ties at least
+   one observed agent or hazard to the longitudinal / lateral choice you
+   emit below. Avoid generic filler.
+
+5. future_meta_behavior.longitudinal: format is exactly "verb_w1 verb_w2" — a
+   2-word phrase (one mask token per word), separated by a single space.
+   - verb (2 words, pick ONE phrase) in {"speed up", "slow down", "keep speed", "stop now"}
+   - Pick based on current speed AND scene context:
+     * current speed < 1 m/s and path clear → "speed up"
+     * cruising and no hazard ahead          → "keep speed"
+     * hazard / red light / vehicle slowing ahead → "slow down"
+     * imminent collision / fire / pedestrian in path → "stop now"
+
+6. future_meta_behavior.lateral: same 2-word format.
+   - verb (2 words, pick ONE phrase) in {"keep lane", "turn left", "turn right", "change left", "change right"}
+   - The Driver instruction is a HIGH-LEVEL hint, not a hard rule. The
+     lateral verb should usually follow it (`GO_LEFT`→`turn left`,
+     `GO_RIGHT`→`turn right`, `GO_STRAIGHT`→`keep lane`) — BUT if the
+     current frame shows a hazard (pedestrian in turning path, oncoming
+     vehicle, blocked lane, imminent collision, etc.) that makes
+     following the nav unsafe within the next 5 s, pick the lateral
+     verb that the EGO ACTUALLY NEEDS to execute instead. Local scene
+     safety overrides the high-level nav.
+
+7. trajectory: 10 future ego waypoints at 0.5 s spacing (t = 0.5, 1.0, ...
+   5.0 s) — one line per waypoint:
+       `<t>s: forward=<sign><tens><ones>.<frac>m, lateral=<sign><tens><ones>.<frac>m`
+
+   Coordinate frame:
+   • `forward` = ego-frame x. POSITIVE = ahead.
+   • `lateral` = ego-frame y. POSITIVE = LEFT of the car;
+     NEGATIVE = RIGHT of the car.
+
+   The lateral SIGN encodes the turn direction; the lateral MAGNITUDE
+   encodes how aggressively the ego deviates from the original heading:
+
+     GO_LEFT     → lateral signs are POSITIVE, magnitude grows over time
+                   (e.g. +00.3m → +00.8m → +01.5m → +02.4m)
+     GO_RIGHT    → lateral signs are NEGATIVE, magnitude grows over time
+                   (e.g. -00.3m → -00.8m → -01.5m → -02.4m)
+     GO_STRAIGHT → lateral stays near zero (sign +, magnitude 00.0m)
+
+   Worked example for the CURRENT sample (instruction=GO_LEFT,
+   speed 5.7 m/s) — your output should look like:
+       0.5s: forward=+02.8m, lateral=+00.3m
+       1.0s: forward=+05.7m, lateral=+00.8m
+       1.5s: forward=+08.5m, lateral=+01.3m
+       2.0s: forward=+11.4m, lateral=+01.8m
+       2.5s: forward=+14.3m, lateral=+02.4m
+       (continue with POSITIVE lateral, sign character '+' for all 10 lines)
+
+   At 5.7 m/s the forward distance grows ~2.87 m per 0.5 s
+   step. Turning lateral grows ~0.3 m per 0.5 s step at low speed,
+   ~0.8 m per step at moderate speed.
+
+TEMPLATE (fill the <|mdm_mask|> positions only — keep all other characters
+verbatim):
+
+{"critical_objects": {"nearby_vehicle": "<|mdm_mask|><|mdm_mask|>", "pedestrian": "<|mdm_mask|><|mdm_mask|>", "cyclist": "<|mdm_mask|><|mdm_mask|>", "construction": "<|mdm_mask|><|mdm_mask|>", "traffic_element": "<|mdm_mask|><|mdm_mask|>", "weather_condition": "<|mdm_mask|><|mdm_mask|>", "road_hazard": "<|mdm_mask|><|mdm_mask|>", "emergency_vehicle": "<|mdm_mask|><|mdm_mask|>", "animal": "<|mdm_mask|><|mdm_mask|>", "special_vehicle": "<|mdm_mask|><|mdm_mask|>", "conflicting_vehicle": "<|mdm_mask|><|mdm_mask|>", "door_opening_vehicle": "<|mdm_mask|><|mdm_mask|>"}, "complexity": "<|mdm_mask|>", "explanation": "<|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|><|mdm_mask|>", "future_meta_behavior": {"longitudinal": "<|mdm_mask|> <|mdm_mask|>", "lateral": "<|mdm_mask|> <|mdm_mask|>"}, "trajectory": "0.5s: forward=<|mdm_mask|><|mdm_mask|><|mdm_mask|>.<|mdm_mask|>m, lateral=<|mdm_mask|><|mdm_mask|><|mdm_mask|>.<|mdm_mask|>m\n1.0s: forward=<|mdm_mask|><|mdm_mask|><|mdm_mask|>.<|mdm_mask|>m, lateral=<|mdm_mask|><|mdm_mask|><|mdm_mask|>.<|mdm_mask|>m\n1.5s: forward=<|mdm_mask|><|mdm_mask|><|mdm_mask|>.<|mdm_mask|>m, lateral=<|mdm_mask|><|mdm_mask|><|mdm_mask|>.<|mdm_mask|>m\n2.0s: forward=<|mdm_mask|><|mdm_mask|><|mdm_mask|>.<|mdm_mask|>m, lateral=<|mdm_mask|><|mdm_mask|><|mdm_mask|>.<|mdm_mask|>m\n2.5s: forward=<|mdm_mask|><|mdm_mask|><|mdm_mask|>.<|mdm_mask|>m, lateral=<|mdm_mask|><|mdm_mask|><|mdm_mask|>.<|mdm_mask|>m\n3.0s: forward=<|mdm_mask|><|mdm_mask|><|mdm_mask|>.<|mdm_mask|>m, lateral=<|mdm_mask|><|mdm_mask|><|mdm_mask|>.<|mdm_mask|>m\n3.5s: forward=<|mdm_mask|><|mdm_mask|><|mdm_mask|>.<|mdm_mask|>m, lateral=<|mdm_mask|><|mdm_mask|><|mdm_mask|>.<|mdm_mask|>m\n4.0s: forward=<|mdm_mask|><|mdm_mask|><|mdm_mask|>.<|mdm_mask|>m, lateral=<|mdm_mask|><|mdm_mask|><|mdm_mask|>.<|mdm_mask|>m\n4.5s: forward=<|mdm_mask|><|mdm_mask|><|mdm_mask|>.<|mdm_mask|>m, lateral=<|mdm_mask|><|mdm_mask|><|mdm_mask|>.<|mdm_mask|>m\n5.0s: forward=<|mdm_mask|><|mdm_mask|><|mdm_mask|>.<|mdm_mask|>m, lateral=<|mdm_mask|><|mdm_mask|><|mdm_mask|>.<|mdm_mask|>m"}

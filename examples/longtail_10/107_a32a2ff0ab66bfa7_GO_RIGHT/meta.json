@@ -1,0 +1,53 @@
+{
+  "sample_idx": 107,
+  "sample_id": "a32a2ff0ab66bfa7bb0c546fe4b684db-148",
+  "navigation_command": "GO_RIGHT",
+  "speed_m_s": 3.462490582811155,
+  "longitudinal_accel_m_s2": 0.20441937446594238,
+  "image_joint": "/weka/home/ext-yingzima/scratchcxiao13/yingzi/workspace/waymo/val/a32a2ff0ab66bfa7bb0c546fe4b684db/148_CAM_JOINT.jpg",
+  "image_joint_local": "cam_joint.jpg",
+  "future_waypoints_10": [
+    [
+      0.8828125,
+      -0.140625
+    ],
+    [
+      1.781005859375,
+      -0.36328125
+    ],
+    [
+      2.690185546875,
+      -0.68359375
+    ],
+    [
+      3.5927734375,
+      -1.1015625
+    ],
+    [
+      4.487060546875,
+      -1.630859375
+    ],
+    [
+      5.358642578125,
+      -2.275390625
+    ],
+    [
+      6.190673828125,
+      -3.02734375
+    ],
+    [
+      6.9658203125,
+      -3.8984375
+    ],
+    [
+      7.66259765625,
+      -4.875
+    ],
+    [
+      8.26513671875,
+      -5.962890625
+    ]
+  ],
+  "ade_first5_m": 2.7282448422932966,
+  "latency_s": 3.2898168563842773
+}

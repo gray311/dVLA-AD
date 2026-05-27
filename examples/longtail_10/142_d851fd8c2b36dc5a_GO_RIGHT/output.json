@@ -1,0 +1,46 @@
+{
+  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"none car\", \"pedestrian\": \"none person\", \"cyclist\": \" cyclist cyclist\", \"construction\": \"none zone\", \"traffic_element\": \"none light\", \"weather_condition\": \"sunny\", \"road_hazard\": \"none obstacle\", \"emergency_vehicle\": \"none vehicle\", \"animal\": \"none animal\", \"special_vehicle\": \"none vehicle\", \"conflicting_vehicle\": \"none car\", \"door_opening_vehicle\": \"none vehicle\"}, \"complexity\": \"simple\", \"explanation\": \"The scene shows a city street with a modern glass building on the left. The road is empty, no there are of pedestrians or vehicles in traffic lights There and weather zone visible clear sky sunny conditions no is any construction hazard such ancoming vehicle car nearby pedestrian cyclist seen visible emergency obstacle or as not other objects elements hazards hazardous path present safety futurecurrent the driving instruction driver go keep turn lane right to maintain current safe cruising speed avoid  longitudinal lateral behavior trajectory 0.5s: forward=+0\", \"navigation_command\": \"GO_RIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"keep speed\", \"lateral\": \"turn right\"}, \"trajectory\": \"0.5s: forward=+01.5m, lateral=+00.3m\n1.0s: forward=+02.4m, lateral=+00.5m\n1.5s: forward=+03.5m, lateral=+00.7m\n2.0s: forward=+04.6m, lateral=+00.9m\n2.5s: forward=+06.0m, lateral=+01.1m\n3.0s: forward=+08.0m, lateral=+01.3m\n3.5s: forward=+10.2m, lateral=+01.5m\n4.0s: forward=+12.4m, lateral=+01.7m\n4.5s: forward=+14.5m, lateral=+01.9m\n5.0s: forward=+16.7m, lateral=+01.1m\"}",
+  "predicted_waypoints_10": [
+    [
+      1.5,
+      0.3
+    ],
+    [
+      2.4,
+      0.5
+    ],
+    [
+      3.5,
+      0.7
+    ],
+    [
+      4.6,
+      0.9
+    ],
+    [
+      6.0,
+      1.1
+    ],
+    [
+      8.0,
+      1.3
+    ],
+    [
+      10.2,
+      1.5
+    ],
+    [
+      12.4,
+      1.7
+    ],
+    [
+      14.5,
+      1.9
+    ],
+    [
+      16.7,
+      1.1
+    ]
+  ],
+  "ade_first5_m": 2.0688562455424444
+}

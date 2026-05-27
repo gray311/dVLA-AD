@@ -1,0 +1,46 @@
+{
+  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"black car\", \"pedestrian\": \"none found\", \"cyclist\": \" found none\", \"construction\": \"none found\", \"traffic_element\": \"clear vehicles\", \"weather_condition\": \"overcast\", \"road_hazard\": \"none detected\", \"emergency_vehicle\": \"none found\", \"animal\": \"none found\", \"special_vehicle\": \"none found\", \"conflicting_vehicle\": \"none found\", \"door_opening_vehicle\": \"none found\"}, \"complexity\": \"simple\", \"explanation\": \"The scene shows a highway with no clear traffic vehicles or pedestrians,. the sky is straight driving and speed are is going on the road to. there driver instruction to go straight_straight and which lateral stay keep right of in left lane change direction turn left at time 05 future behavior now speed forward=+192m m, lateral=+0m m-483ms s trajectoryfuture:t0s5:forward=-192m laterlateral++m\", \"navigation_command\": \"GO_STRAIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"keep speed\", \"lateral\": \"keep lane\"}, \"trajectory\": \"0.5s: forward=+12.9m, lateral=+00.0m\n1.0s: forward=+21.9m, lateral=+00.0m\n1.5s: forward=+31.9m, lateral=+00.0m\n2.0s: forward=+41.9m, lateral=+00.0m\n2.5s: forward=+51.9m, lateral=+00.0m\n3.0s: forward=+61.9m, lateral=+00.0m\n3.5s: forward=+71.9m, lateral=+00.0m\n4.0s: forward=+11.9m, lateral=+00.0m\n4.5s: forward=+21.9m, lateral=+00.0m\n5.0s: forward=+31.9m, lateral=+00.0m\"}",
+  "predicted_waypoints_10": [
+    [
+      12.9,
+      0.0
+    ],
+    [
+      21.9,
+      0.0
+    ],
+    [
+      31.9,
+      0.0
+    ],
+    [
+      41.9,
+      0.0
+    ],
+    [
+      51.9,
+      0.0
+    ],
+    [
+      61.9,
+      0.0
+    ],
+    [
+      71.9,
+      0.0
+    ],
+    [
+      11.9,
+      0.0
+    ],
+    [
+      21.9,
+      0.0
+    ],
+    [
+      31.9,
+      0.0
+    ]
+  ],
+  "ade_first5_m": 15.660660943000986
+}

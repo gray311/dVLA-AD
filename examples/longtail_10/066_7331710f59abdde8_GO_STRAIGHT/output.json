@@ -1,0 +1,46 @@
+{
+  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"none car\", \"pedestrian\": \"none person\", \"cyclist\": \" cyclist None\", \"construction\": \"none zone\", \"traffic_element\": \"none light\", \"weather_condition\": \"sunny\", \"road_hazard\": \"none obstacle\", \"emergency_vehicle\": \"none car\", \"animal\": \"none animal\", \"special_vehicle\": \"none vehicle\", \"conflicting_vehicle\": \"none car\", \"door_opening_vehicle\": \"none car\"}, \"complexity\": \"simple\", \"explanation\": \"The scene is a residential street with palm clear, and no traffic. few cars are visible in the, distance but there road ahead not signs or of the car. The sky or pedestrian any other hazards such objects seen as on vehicle hazard like vehicles in pedestrianscoming vehicles emergency vehicle from construction zone blocked obstacles intersection hazardous future behavior: keep left lane change at maintaining current speed driving that to maintain safe course going right straight straight without turninging, lateral_sign = + 105m forward=_str0\", \"navigation_command\": \"GO_STRAIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"keep speed\", \"lateral\": \"keep left\"}, \"trajectory\": \"0.5s: forward=+03.7m, lateral=+00.0m\n1.0s: forward=+07.5m, lateral=+00.0m\n1.5s: forward=+18.3m, lateral=+00.0m\n2.0s: forward=+37.1m, lateral=+00.0m\n2.5s: forward=+37.8m, lateral=+00.0m\n3.0s: forward=+57.6m, lateral=+00.0m\n3.5s: forward=+77.3m, lateral=+00.0m\n4.0s: forward=+77.3m, lateral=+00.0m\n4.5s: forward=+77.8m, lateral=+00.0m\n5.0s: forward=+77.8m, lateral=+00.0m\"}",
+  "predicted_waypoints_10": [
+    [
+      3.7,
+      0.0
+    ],
+    [
+      7.5,
+      0.0
+    ],
+    [
+      18.3,
+      0.0
+    ],
+    [
+      37.1,
+      0.0
+    ],
+    [
+      37.8,
+      0.0
+    ],
+    [
+      57.6,
+      0.0
+    ],
+    [
+      77.3,
+      0.0
+    ],
+    [
+      77.3,
+      0.0
+    ],
+    [
+      77.8,
+      0.0
+    ],
+    [
+      77.8,
+      0.0
+    ]
+  ],
+  "ade_first5_m": 14.451666549298796
+}

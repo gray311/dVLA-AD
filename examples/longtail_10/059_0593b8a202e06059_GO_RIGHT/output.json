@@ -1,0 +1,46 @@
+{
+  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"black car\", \"pedestrian\": \"b cyclist\", \"cyclist\": \" cyclist cyclist\", \"construction\": \"none found\", \"traffic_element\": \"green light\", \"weather_condition\": \"scast\", \"road_hazard\": \"none found\", \"emergency_vehicle\": \"none found\", \"animal\": \"none found\", \"special_vehicle\": \"none found\", \"conflicting_vehicle\": \"none found\", \"door_opening_vehicle\": \"none found\"}, \"complexity\": \"simple\", \"explanation\": \"The scene is a typical residential street with a single cyclist crossing the intersection. The are light clear, traffic no vehicles and hazards road any visible. The current driver's to the of going on the right and instruction instructions to go future driving behavior will trajectory speed up maintain keep left in original turn lane lateral change right at time nowegowayfuture: 0 5s1 forward02.5m, lateral-1083m2 1.s: forward0466\", \"navigation_command\": \"GO_RIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"speed up\", \"lateral\": \"keep left\"}, \"trajectory\": \"0.5s: forward=+02.5m, lateral=+00.3m\n1.0s: forward=+04.6m, lateral=+00.5m\n1.5s: forward=+06.8m, lateral=+00.5m\n2.0s: forward=+09.1m, lateral=+00.5m\n2.5s: forward=+00.2m, lateral=+00.5m\n3.0s: forward=+00.4m, lateral=+00.5m\n3.5s: forward=+00.6m, lateral=+00.5m\n4.0s: forward=+00.8m, lateral=+00.5m\n4.5s: forward=+00.0m, lateral=+00.5m\n5.0s: forward=+00.0m, lateral=+00.5m\"}",
+  "predicted_waypoints_10": [
+    [
+      2.5,
+      0.3
+    ],
+    [
+      4.6,
+      0.5
+    ],
+    [
+      6.8,
+      0.5
+    ],
+    [
+      9.1,
+      0.5
+    ],
+    [
+      0.2,
+      0.5
+    ],
+    [
+      0.4,
+      0.5
+    ],
+    [
+      0.6,
+      0.5
+    ],
+    [
+      0.8,
+      0.5
+    ],
+    [
+      0.0,
+      0.5
+    ],
+    [
+      0.0,
+      0.5
+    ]
+  ],
+  "ade_first5_m": 3.8019986169185556
+}

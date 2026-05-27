@@ -1,0 +1,46 @@
+{
+  "model_output_text": "{\"critical_objects\": {\"nearby_vehicle\": \"yellow bus\", \"pedestrian\": \"none found\", \"cyclist\": \" found here\", \"construction\": \"none found\", \"traffic_element\": \"clear road\", \"weather_condition\": \"overcast\", \"road_hazard\": \"none detected\", \"emergency_vehicle\": \"none visible\", \"animal\": \"none seen\", \"special_vehicle\": \"yellow bus\", \"conflicting_vehicle\": \"none detected\", \"door_opening_vehicle\": \"none found\"}, \"complexity\": \"simple\", \"explanation\": \"The scene shows a busy highway under with multiple, including a yellow bus and several cars. The the road is clear straight traffic vehicles no there are any immediate hazards or pedestrians visible of potential conflicts in lane driver instructions to driving the on this road. goGO behavior maintain be speed up maintaining speed current keep as long as avoid path  lateral trajectory stay keep STR straight left change turn0 right5m forward 1 m0 later lateral 25s: forward=+14.30m\", \"navigation_command\": \"GO_STRAIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"speed up\", \"lateral\": \"keep left\"}, \"trajectory\": \"0.5s: forward=+00.0m, lateral=+00.0m\n1.0s: forward=+04.0m, lateral=+00.0m\n1.5s: forward=+08.0m, lateral=+00.0m\n2.0s: forward=+12.0m, lateral=+00.0m\n2.5s: forward=+16.0m, lateral=+00.0m\n3.0s: forward=+20.0m, lateral=+00.0m\n3.5s: forward=+24.0m, lateral=+00.0m\n4.0s: forward=+80.0m, lateral=+00.0m\n4.5s: forward=+18.0m, lateral=+00.0m\n5.0s: forward=+20.1m, lateral=+00.0m\"}",
+  "predicted_waypoints_10": [
+    [
+      0.0,
+      0.0
+    ],
+    [
+      4.0,
+      0.0
+    ],
+    [
+      8.0,
+      0.0
+    ],
+    [
+      12.0,
+      0.0
+    ],
+    [
+      16.0,
+      0.0
+    ],
+    [
+      20.0,
+      0.0
+    ],
+    [
+      24.0,
+      0.0
+    ],
+    [
+      80.0,
+      0.0
+    ],
+    [
+      18.0,
+      0.0
+    ],
+    [
+      20.1,
+      0.0
+    ]
+  ],
+  "ade_first5_m": 5.30372061791995
+}

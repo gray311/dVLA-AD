@@ -1,0 +1,21 @@
+{
+  "n_samples": 10,
+  "picked_indices": [
+    202,
+    244,
+    59,
+    327,
+    107,
+    142,
+    66,
+    86,
+    374,
+    143
+  ],
+  "config": {
+    "model": "Fast_dVLM_3B (zero-shot)",
+    "image": "CAM_JOINT (stitched 3-cam)",
+    "template": "V3 (critical_objects + complexity + explanation + behavior + semantic trajectory)",
+    "algorithm": "SGLang HierarchyBlock, 4 steps/chunk"
+  }
+}
