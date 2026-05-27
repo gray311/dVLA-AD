@@ -30,7 +30,7 @@ CRITICAL_CATEGORIES = [
 # critical_objects: 2 mask tokens per category — just enough for "none" or a
 # short 2-token phrase like "black car" / "green light".
 N_CRITICAL_TOKENS = 2
-N_EXPLANATION_TOKENS = 50
+N_EXPLANATION_TOKENS = 100
 
 # Trajectory: 10 waypoints @ 2 Hz (0.5 s spacing) covering 5 s horizon.
 # Each waypoint = `<sign><tens><ones>.<frac>,<sign><tens><ones>.<frac>` with
@@ -164,28 +164,12 @@ OUTPUT FORMAT REQUIREMENTS:
      "black car", "green light", "orange cone", "overcast sky"). Keep it tight —
      do NOT introduce new JSON keys inside the slot.
 
-2. explanation: ~50 tokens of natural-language reasoning in EXACTLY 3 stages.
-   Do not just list the critical_objects values — instead reason in this order:
-
-   (a) SCENE DESCRIPTION — one sentence on the overall scene context
-       (road type, lane layout, ego situation, weather, time of day).
-       Example: "Two-lane city road at an intersection in overcast weather."
-
-   (b) CRUCIAL-OBJECT BEHAVIOR PREDICTION — for each critical object that is
-       NOT "none", predict what that object is about to do in the next 3 s.
-       Example: "The red sedan ahead is slowing for the red light;
-                 the pedestrian on the right curb intends to cross."
-
-   (c) EGO–OBJECT INTERACTION — explain HOW the predicted object behaviors
-       constrain the ego's own next action. Tie this to the meta-behavior
-       (longitudinal/lateral) you will emit.
-       Example: "Because the sedan is decelerating in our lane, ego must
-                 slow down and keep the lane; we therefore output
-                 'slow down' + 'keep lane'."
-
-   Keep it ~50 tokens total — be terse. No filler sentences like "the road
-   is clear" if it isn't load-bearing. Never repeat critical_objects values
-   verbatim — rephrase as agent behaviors.
+2. explanation: ~100 tokens describing the scene, salient objects, and how
+   they shape your planned action. Write naturally — no fixed template, no
+   numbered headings. A useful explanation usually grounds in the visible
+   scene (road type, weather, what other agents are doing) and ties at least
+   one observed agent or hazard to the longitudinal / lateral choice you
+   emit below. Avoid generic filler.
 
 3. future_meta_behavior.longitudinal: format is exactly "verb_w1 verb_w2" — a
    2-word phrase (one mask token per word), separated by a single space.
