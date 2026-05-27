@@ -1,0 +1,5 @@
+{
+  "path": "Fast_dVLM_3B via NVlabs SGLang fork (unmodified); free-form spec, no template",
+  "latency_s": 0.777172327041626,
+  "output_text": "{\n  \"critical_objects\": {\n    \"white wall\": \"white brick wall\",\n    \"red car\": \"red car parked\",\n    \"black car\": \"black car parked\",\n    \"green light\": \"green light visible\",\n    \"orange cone\": \"orange cone visible\"\n  },\n  \"explanation\": \"The scene shows a two-lane road with a white brick wall on the left and a red car and a black car parked on the right. The green light is visible, indicating it's safe to proceed. There's an orange cone on the right side of the road, which might be a warning for drivers to slow down or change lanes.\",\n  \"future_meta_behavior\": {\n    \"longitudinal\": \"keep speed\",\n    \"lateral\": \"turn left\"\n  },\n  \"future_trajectory\": \"+00.0,+00.0;+00.5,+00.0;+01.0,+00.0;+01.5,+00.0;+02.0,+00.0;+02.5,+00.0;+03.0,+00.0;+03.5,+00.0;+04.0,+00.0;+04.5,+00.0\"\n}"
+}

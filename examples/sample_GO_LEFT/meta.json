@@ -1,0 +1,46 @@
+{
+  "sample_id": "9ac9e56e4ac9c630d35ffca845a8114c-149",
+  "navigation_command": "GO_LEFT",
+  "speed_m_s": 1.1893390244822897,
+  "accel_longitudinal_m_s2": 0.018294095993041992,
+  "image_path_front_cam": "/weka/home/ext-yingzima/scratchcxiao13/yingzi/workspace/waymo/val/9ac9e56e4ac9c630d35ffca845a8114c/149_CAM_FRONT.jpg",
+  "history_waypoints_first_3": [
+    [
+      -3.301513671875,
+      0.247314453125
+    ],
+    [
+      -3.132080078125,
+      0.15478515625
+    ],
+    [
+      -2.9609375,
+      0.07080078125
+    ]
+  ],
+  "gt_future_waypoints_first_5": [
+    [
+      0.29296875,
+      0.106201171875
+    ],
+    [
+      0.574951171875,
+      0.232666015625
+    ],
+    [
+      0.845703125,
+      0.375244140625
+    ],
+    [
+      1.101806640625,
+      0.53271484375
+    ],
+    [
+      1.343017578125,
+      0.701416015625
+    ]
+  ],
+  "template_length_tokens": 390,
+  "n_mask_positions": 208,
+  "n_scaffold_positions": 182
+}
