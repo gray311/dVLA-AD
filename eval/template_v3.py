@@ -30,7 +30,7 @@ CRITICAL_CATEGORIES = [
 # critical_objects: 2 mask tokens per category — just enough for "none" or a
 # short 2-token phrase like "black car" / "green light".
 N_CRITICAL_TOKENS = 2
-N_EXPLANATION_TOKENS = 100
+N_EXPLANATION_TOKENS = 50
 
 # Trajectory: 10 waypoints @ 2 Hz (0.5 s spacing) covering 5 s horizon.
 # Each waypoint = `<sign><tens><ones>.<frac>,<sign><tens><ones>.<frac>` with
@@ -164,7 +164,7 @@ OUTPUT FORMAT REQUIREMENTS:
      "black car", "green light", "orange cone", "overcast sky"). Keep it tight —
      do NOT introduce new JSON keys inside the slot.
 
-2. explanation: ~100 tokens of natural-language reasoning in EXACTLY 3 stages.
+2. explanation: ~50 tokens of natural-language reasoning in EXACTLY 3 stages.
    Do not just list the critical_objects values — instead reason in this order:
 
    (a) SCENE DESCRIPTION — one sentence on the overall scene context
@@ -183,7 +183,7 @@ OUTPUT FORMAT REQUIREMENTS:
                  slow down and keep the lane; we therefore output
                  'slow down' + 'keep lane'."
 
-   Keep it ~100 tokens total. Be specific. No filler sentences like "the road
+   Keep it ~50 tokens total — be terse. No filler sentences like "the road
    is clear" if it isn't load-bearing. Never repeat critical_objects values
    verbatim — rephrase as agent behaviors.
 

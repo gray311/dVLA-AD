@@ -117,7 +117,10 @@ def grounding_signals(text, sample, model_output):
 
 
 def main():
-    sg = json.load(open(os.path.join(OUT_DIR, "sglang.json")))
+    import sys
+    sg_path = sys.argv[1] if len(sys.argv) > 1 else os.path.join(OUT_DIR, "sglang.json")
+    out_path_name = sys.argv[2] if len(sys.argv) > 2 else "explanation_compare.md"
+    sg = json.load(open(sg_path))
     ad = json.load(open(os.path.join(OUT_DIR, "dvlm_ad.json")))
     ad_by = {r["sample_id"]: r for r in ad}
 
@@ -226,7 +229,7 @@ def main():
     lines.append(f"  - dVLM-AD: {ad_unique}")
     lines.append("")
 
-    out_path = os.path.join(OUT_DIR, "explanation_compare.md")
+    out_path = os.path.join(OUT_DIR, out_path_name)
     with open(out_path, "w") as f:
         f.write("\n".join(lines))
     print(f"Wrote {out_path}")
