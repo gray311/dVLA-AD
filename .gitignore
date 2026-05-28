@@ -11,3 +11,13 @@ dist/
 .cache/
 results/**/*.json
 results/**/*.md
+
+# Model artifacts / training outputs — keep weights on weka scratch, not in git
+adapter_model/
+output_models/
+checkpoints/
+*.safetensors
+*.bin
+*.pt
+*.ckpt
+*.log

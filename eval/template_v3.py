@@ -4,12 +4,13 @@ For the trajectory task we adapt the template's trajectory horizon to our
 Waymo-50 setup: 20 waypoints @ 0.25 s spacing (5 s horizon), not the
 template's default 8 @ 0.5 s.
 
-The template literal `<|mdm_mask|>` is the mask token of LaViDa / DiffusionVL /
-Fast-dVLM. After fill, we extract:
-  - critical_objects (12 entries × 10 mask slots)
-  - explanation (100 mask slots)
-  - future_meta_behavior.{longitudinal, lateral} (5 + 5)
-  - trajectory (100 mask slots) — contains the actual "x.x,y.y;..." waypoints
+The mask token for this backbone is the literal `|<MASK>|` (single id 151665);
+see the MASK constant below. After fill, we extract:
+  - critical_objects (12 entries × 2 mask slots each)
+  - complexity (1 mask slot)
+  - explanation (N_EXPLANATION_TOKENS mask slots)
+  - future_meta_behavior.{longitudinal, lateral} (2 + 2)
+  - trajectory (10 waypoints, sign+digit gated slots)
 """
 from __future__ import annotations
 import math
@@ -17,7 +18,11 @@ import re
 import json
 from typing import List, Tuple
 
-MASK = "<|mdm_mask|>"
+# Backbone mask token. Fast_dDrive_as_dVLM (model_type=fast_dvlm) tokenizes
+# `|<MASK>|` to a single id (151665) — the same mask_id the finetuner uses.
+# The legacy `<|mdm_mask|>` (LaViDa/DiffusionVL) is NOT a single token here, so
+# it must not be used in scaffolds for this backbone.
+MASK = "|<MASK>|"
 
 CRITICAL_CATEGORIES = [
     "nearby_vehicle", "pedestrian", "cyclist", "construction",
@@ -30,7 +35,7 @@ CRITICAL_CATEGORIES = [
 # critical_objects: 2 mask tokens per category — just enough for "none" or a
 # short 2-token phrase like "black car" / "green light".
 N_CRITICAL_TOKENS = 2
-N_EXPLANATION_TOKENS = 64
+N_EXPLANATION_TOKENS = 100
 
 # Trajectory: 10 waypoints @ 2 Hz (0.5 s spacing) covering 5 s horizon.
 # Each waypoint = `<sign><tens><ones>.<frac>,<sign><tens><ones>.<frac>` with
@@ -58,7 +63,7 @@ COMPLEXITY_LABELS = ["simple", "complex"]
 
 
 def build_template_v3() -> str:
-    """JSON scaffold with <|mdm_mask|> at every slot the model should fill
+    """JSON scaffold with the |<MASK>| token at every slot the model should fill
     (string-rendered version, for the human-readable TEMPLATE block at the tail
     of the prompt). The token-id-level builder is `build_template_ids_v3` below
     and is the source of truth used by loaders.
@@ -177,7 +182,7 @@ def build_template_ids_v3(tokenizer, mask_id: int):
     return ids, slots, critical_pairs
 
 
-PROMPT_V3 = """You are an autonomous driving assistant. Given the current driving scene, identify critical objects, explain your reasoning, then predict the future driving behavior and trajectory.
+PROMPT_V3 = """You are an autonomous driving assistant. Reason like a driver in three stages: first PERCEIVE the scene, then PREDICT how it will change, then PLAN what to do.
 
 INPUT:
 - Multi-view images: front-left, front, front-right
@@ -186,82 +191,58 @@ INPUT:
 - Past 1.5 s of ego positions at 0.1 s spacing (x forward, y left, meters):
   {history}
 
-TASK:
-Fill in the masked positions in the following JSON template.
+OUTPUT:
+- Return ONLY the completed JSON object. No commentary, no markdown fences.
+- Every field is mandatory. Do not leave any mask empty.
+- All planning fields (longitudinal, lateral, trajectory) must be mutually
+  consistent and must obey the instruction below unless a hazard makes it unsafe.
 
-OUTPUT FORMAT REQUIREMENTS:
 
-1. critical_objects: For each of the 12 categories, fill EXACTLY 2 tokens:
-   - If the category does NOT exist in the scene: fill "none" (or "none" + 1 pad).
-   - If it DOES exist: fill a SHORT referring expression (max 2 tokens, e.g.
-     "black car", "green light", "orange cone", "overcast sky"). Keep it tight —
-     do NOT introduce new JSON keys inside the slot.
+FIELDS:
+1. critical_objects — an object with these 12 keys. For each key, give a value
+   that is either "none" (if absent) OR a short descriptor of AT MOST 2 words
+   naming the most salient instance (e.g. "black car", "green light",
+   "orange cone"):
+     - nearby_vehicle      (any car/truck around: ahead, oncoming, or side)
+     - pedestrian          (people on or near the road)
+     - cyclist             (bicycle / motorcycle / scooter)
+     - construction        (cone, barrier, work zone)
+     - traffic_element     (traffic light, stop sign, lane-marking sign)
+     - weather_condition   (lighting / weather, e.g. "clear day", "wet night")
+     - road_hazard         (debris, pothole, fire, blocked lane, fallen object)
+     - emergency_vehicle   (police, ambulance, fire truck)
+     - animal
+     - special_vehicle     (bus, trailer, construction truck)
+     - conflicting_vehicle (vehicle whose path may cross yours)
+     - door_opening_vehicle(parked car with a door opening)
 
-2. complexity: ONE token — exactly one of {{"simple", "complex"}}.
-   - "simple": low-traffic, no hazards, predictable surroundings (empty
-     residential street, clear highway, single lead car in calm flow).
-   - "complex": ANY of — multiple interacting agents (≥3 nearby vehicles
-     or pedestrians/cyclists in path), an unfolding hazard (accident
-     ahead, fire / smoke, blocked lane, debris, oncoming emergency
-     vehicle), construction zones with lane shifts, complex
-     intersections with mixed traffic, or anything that should signal
-     "give this frame extra planning attention".
+2. complexity — exactly one word:
+     "complex" if there are many vehicles/people OR any hazard
+       (fire, accident, blocked lane, emergency vehicle);
+     otherwise "simple".
 
-3. explanation: ~100 tokens describing the scene, salient objects, and how
-   they shape your planned action. Write naturally — no fixed template, no
-   numbered headings. A useful explanation usually grounds in the visible
-   scene (road type, weather, what other agents are doing) and ties at least
-   one observed agent or hazard to the longitudinal / lateral choice you
-   emit below. Avoid generic filler.
+3. explanation — plain words, NO numbers. Three short parts, in this order:
+     Perceive: the road and lighting, plus the key vehicles, people, or hazards.
+     Predict:  what those vehicles and people are likely to do next.
+     Plan:     what you will therefore do, and why.
 
-5. future_meta_behavior.longitudinal: format is exactly "verb_w1 verb_w2" — a
-   2-word phrase (one mask token per word), separated by a single space.
-   - verb (2 words, pick ONE phrase) in {{"speed up", "slow down", "keep speed", "stop now"}}
-   - Pick based on current speed AND scene context:
-     * current speed < 1 m/s and path clear → "speed up"
-     * cruising and no hazard ahead          → "keep speed"
-     * hazard / red light / vehicle slowing ahead → "slow down"
-     * imminent collision / fire / pedestrian in path → "stop now"
+4. future_meta_behavior.longitudinal — choose ONE of:
+     {{speed up, slow down, keep speed, stop now}}
 
-6. future_meta_behavior.lateral: same 2-word format.
-   - verb (2 words, pick ONE phrase) in {{"keep lane", "turn left", "turn right", "change left", "change right"}}
-   - The Driver instruction is a HIGH-LEVEL hint, not a hard rule. The
-     lateral verb should usually follow it (`GO_LEFT`→`turn left`,
-     `GO_RIGHT`→`turn right`, `GO_STRAIGHT`→`keep lane`) — BUT if the
-     current frame shows a hazard (pedestrian in turning path, oncoming
-     vehicle, blocked lane, imminent collision, etc.) that makes
-     following the nav unsafe within the next 5 s, pick the lateral
-     verb that the EGO ACTUALLY NEEDS to execute instead. Local scene
-     safety overrides the high-level nav.
+5. future_meta_behavior.lateral — choose ONE of:
+     {{keep lane, turn left, turn right, change left, change right}}
+   Follow {instruction} unless a hazard makes it unsafe.
 
-7. trajectory: 10 future ego waypoints at 0.5 s spacing (t = 0.5, 1.0, ...
-   5.0 s) — one line per waypoint:
-       `<t>s: forward=<sign><tens><ones>.<frac>m, lateral=<sign><tens><ones>.<frac>m`
-
-   Coordinate frame:
-   • `forward` = ego-frame x. POSITIVE = ahead.
-   • `lateral` = ego-frame y. POSITIVE = LEFT of the car;
-     NEGATIVE = RIGHT of the car.
-
-   The lateral SIGN encodes the turn direction; the lateral MAGNITUDE
-   encodes how aggressively the ego deviates from the original heading:
-
-     GO_LEFT     → lateral signs are POSITIVE, magnitude grows over time
-                   (e.g. +00.3m → +00.8m → +01.5m → +02.4m)
-     GO_RIGHT    → lateral signs are NEGATIVE, magnitude grows over time
-                   (e.g. -00.3m → -00.8m → -01.5m → -02.4m)
-     GO_STRAIGHT → lateral stays near zero (sign +, magnitude 00.0m)
-
-   Worked example for the CURRENT sample (instruction={instruction},
-   speed {speed:.1f} m/s) — your output should look like:
+6. trajectory — 10 waypoints, one every 0.5 s (covering the next 5 s).
+   Coordinate frame: origin (0, 0) = your current position; axes are ego-centric.
+     - forward: meters ahead. Strictly increasing unless stopping. Spacing
+       between consecutive points is about {step_m:.1f} m at current speed —
+       larger if speeding up, smaller if slowing, approaching 0 if stopping.
+     - lateral: meters to the side. + is LEFT, - is RIGHT, ~0 for straight.
+       When turning or changing lane, magnitude grows smoothly over time.
+   Both axes must vary smoothly (no jumps) and match the chosen longitudinal
+   and lateral behaviors. Example:
 {lateral_example}
-
-   At {speed:.1f} m/s the forward distance grows ~{step_m:.2f} m per 0.5 s
-   step. Turning lateral grows ~0.3 m per 0.5 s step at low speed,
-   ~0.8 m per step at moderate speed.
-
-TEMPLATE (fill the <|mdm_mask|> positions only — keep all other characters
-verbatim):
 
 {template}
 """

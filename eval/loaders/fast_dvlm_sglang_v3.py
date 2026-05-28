@@ -71,18 +71,45 @@ def _build_v3_position_gates(tokenizer, slot_info, template_len):
 
 
 def _build_json_special_blacklist(tokenizer):
-    """Token IDs whose decoded form contains JSON metacharacters; never commit
-    these at any mask slot (would corrupt the JSON scaffold)."""
+    """Minimal forbidden list for the dDrive algorithm: JSON metacharacters
+    plus newline/tab. NO digit/format pollution tokens (trajectory has no
+    gates under the dDrive algorithm, so it needs digits/+/-).
+
+    Newline (\\n) matters: without it the model pads the explanation tail
+    with `\\n\\n\\n` ("gives up" early) → truncated explanation. Forbidding
+    \\n forces it to keep emitting real words to fill the slot.
+    """
     vocab = tokenizer.get_vocab()
     bad = set()
-    bad_chars = ('"', '{', '}', '\\', '“', '”', '‘', '’', '`')
+    bad_chars = ('"', '{', '}', '\\', '“', '”', '‘', '’', '`', '\n', '\t')
+
+    def _has_cjk(s):
+        # CJK / fullwidth / Japanese / Korean ranges — the explanation tail
+        # collapses to Chinese ("服务车在场景中") on content-poor scenes; forbid it.
+        for ch in s:
+            o = ord(ch)
+            if (0x3000 <= o <= 0x9FFF or 0xAC00 <= o <= 0xD7AF
+                    or 0xF900 <= o <= 0xFAFF or 0xFF00 <= o <= 0xFFEF):
+                return True
+        return False
+
     for _tok_str, tok_id in vocab.items():
         try:
             decoded = tokenizer.decode([tok_id], skip_special_tokens=False)
         except Exception:
             continue
-        if any(c in decoded for c in bad_chars):
+        if any(c in decoded for c in bad_chars) or _has_cjk(decoded):
             bad.add(tok_id)
+    # Also forbid EOS/special tokens that strip to "" — the model uses these to
+    # "end" the explanation early, leaving the rest of the 100-mask slot empty.
+    # Forbidding them forces real words into every slot.
+    for s in ("<|endoftext|>", "<|im_end|>", "<|im_start|>"):
+        try:
+            tid = tokenizer.convert_tokens_to_ids(s)
+            if tid is not None and tid >= 0:
+                bad.add(int(tid))
+        except Exception:
+            pass
     return sorted(bad)
 
 DEFAULT_PATH = "/weka/home/ext-yingzima/scratchaszalay1_ssci/yy/huggingface/Fast_dVLM_3B"
@@ -445,7 +472,7 @@ def generate(bundle, image_paths, question, max_new_tokens=None, temperature=0.0
         # rep_penalty * count_so_far. Plus within-step dedup ensures top-K
         # commits in one step pick distinct tokens.
         "dllm_template_rep_penalty_positions": rep_positions,
-        "dllm_template_rep_penalty": float(kwargs.get("rep_penalty", 0.0)),
+        "dllm_template_rep_penalty": float(kwargs.get("rep_penalty", 12.0)),
         # Fast-dDrive confidence threshold for commit (default 0.9).
         "dllm_template_threshold": float(kwargs.get("threshold", 0.9)),
         # Steps per chunk (caller override → default 4). 4 = fast (1.7-2s)

@@ -177,6 +177,9 @@ class HierarchyBlock(DllmAlgorithm):
         if is_template_mode:
             import os as _os
             threshold = float(getattr(forward_batch, "dllm_template_threshold", 0.9) or 0.9)
+            rep_penalty = float(
+                getattr(forward_batch, "dllm_template_rep_penalty", 0.0) or 0.0
+            )
             if _os.environ.get("DLLM_FWD_LOG"):
                 if not getattr(self, "_logged_mode_this_req", False):
                     print(
@@ -188,6 +191,13 @@ class HierarchyBlock(DllmAlgorithm):
 
             chunk_mask = forward_batch.input_ids == self.mask_id
             n_mask_chunk = int(chunk_mask.sum().item())
+
+            # Minimal forbidden list (JSON-meta + newline/tab). Applied at
+            # EVERY mask commit so the model can't (a) break JSON with a
+            # quote/brace, or (b) "give up" early by padding the explanation
+            # tail with newline tokens. Built lazily once vocab_size is known.
+            forbidden_ids = getattr(forward_batch, "dllm_template_forbidden_token_ids", None)
+            forbidden_mask = None
 
             if n_mask_chunk > 0:
                 max_iter = n_mask_chunk + 5
@@ -223,6 +233,43 @@ class HierarchyBlock(DllmAlgorithm):
                     else:
                         shifted = full_logits
 
+                    # Apply minimal forbidden mask (JSON-meta + newline/tab) at
+                    # all positions — keeps JSON valid and prevents newline
+                    # "give-up" padding of the explanation tail.
+                    if forbidden_ids:
+                        if forbidden_mask is None:
+                            vocab_size = shifted.shape[-1]
+                            forbidden_mask = torch.zeros(
+                                vocab_size, dtype=torch.bool, device=shifted.device,
+                            )
+                            for bid in forbidden_ids:
+                                if 0 <= bid < vocab_size:
+                                    forbidden_mask[bid] = True
+                        shifted[:, forbidden_mask] = float("-inf")
+
+                    # Repetition penalty: discourage each position from copying
+                    # the committed token 1 or 2 slots to its left. Diffusion
+                    # template-fill has a strong immediate-repeat tendency that
+                    # survives neighbor-deferral ("straight straight", "the the",
+                    # ",,", "::", "ing"+"ing", "Predict"+"Predict") because the
+                    # off-by-one predictor at the fixed left neighbor still puts
+                    # high mass on repeating it. We subtract a soft penalty from
+                    # the left-neighbor token id(s) at each position. Only
+                    # COMMITTED neighbors are penalized (skip mask_id); the
+                    # penalty is soft so a strongly-justified repeat (e.g. a
+                    # trajectory "00") can still win.
+                    if rep_penalty > 0.0:
+                        ids_row = forward_batch.input_ids  # [B]
+                        B = shifted.shape[0]
+                        rows = torch.arange(B, device=shifted.device)
+                        for off, scale in ((1, 1.0), (2, 0.5)):
+                            if B > off:
+                                neigh = torch.cat(
+                                    [ids_row[:off], ids_row[:-off]], dim=0,
+                                )  # token at position i-off
+                                valid = neigh != self.mask_id
+                                shifted[rows[valid], neigh[valid]] -= rep_penalty * scale
+
                     # Argmax + confidence at each position
                     preds = shifted.argmax(dim=-1)  # [B]
                     probs = F.softmax(shifted, dim=-1)
@@ -232,12 +279,33 @@ class HierarchyBlock(DllmAlgorithm):
                         cur_mask, conf, torch.tensor(-np.inf, device=conf.device),
                     )
 
-                    # Commit positions with conf > threshold.
+                    # Commit positions with conf > threshold — but NEVER commit
+                    # two CONSECUTIVE mask positions in the same step. Diffusion
+                    # predicts each mask independently from the same context, so
+                    # finalizing adjacent masks together produces doubling
+                    # artifacts ("keepkeep", "PPredict", "straight straight").
+                    # Deferring the right member of each adjacent run lets it
+                    # re-predict next step with its left neighbor now fixed in
+                    # context, which removes the doubling. A scaffold token
+                    # between two masks separates their positions by >=2, so
+                    # legitimate adjacent slots (e.g. trajectory digits) still
+                    # both commit — they just take one extra iteration. Progress
+                    # is guaranteed: the first candidate is always kept, so >=1
+                    # mask commits per step (or 1 via the fallback below).
                     unmask = conf > threshold
                     if unmask.any():
-                        forward_batch.input_ids = torch.where(
-                            unmask, preds, forward_batch.input_ids,
+                        idxs = torch.nonzero(unmask, as_tuple=False).flatten().tolist()
+                        keep, prev = [], -2
+                        for p in idxs:  # ascending position order
+                            if p == prev + 1:
+                                continue  # adjacent to a kept commit → defer
+                            keep.append(p)
+                            prev = p
+                        keep_t = torch.tensor(
+                            keep, dtype=torch.long,
+                            device=forward_batch.input_ids.device,
                         )
+                        forward_batch.input_ids[keep_t] = preds[keep_t]
                     else:
                         # Fallback: commit single highest-conf masked position.
                         best_pos = int(conf.argmax().item())

@@ -62,8 +62,18 @@ def quality_flags(text):
     if not expl:
         flags.append("no_expl")
         return flags
-    if len(expl) < 30:
-        flags.append("too_short")
+    expl_s = expl.strip()
+    # TRUNCATION: short OR doesn't end at a sentence/clause boundary.
+    # On OOD scenes the zero-shot model emits "The image shows a highway with"
+    # then sparse/empty tokens — caught here.
+    if len(expl_s) < 80:
+        flags.append(f"truncated_short({len(expl_s)})")
+    elif not expl_s.endswith((".", "m", "s", ")", "”", '"')) and \
+            expl_s.split()[-1].lower() in {
+                "with", "and", "the", "a", "to", "of", "in", "is", "are",
+                "as", "at", "on", "for", "but", "or", "that", "which"}:
+        # ends on a dangling function word → incomplete sentence
+        flags.append("dangling_end")
     # Non-ASCII ratio (Chinese collapse)
     non_ascii = sum(1 for c in expl if ord(c) > 127)
     if non_ascii / max(len(expl), 1) > 0.05:
@@ -79,6 +89,9 @@ def quality_flags(text):
     # BPE glue: a run of >25 non-space word chars
     if re.search(r'[A-Za-z]{26,}', expl):
         flags.append("bpe_glue")
+    # Double-space (BPE-boundary artifact from removed gates)
+    if "  " in expl:
+        flags.append("double_space")
     return flags
 
 

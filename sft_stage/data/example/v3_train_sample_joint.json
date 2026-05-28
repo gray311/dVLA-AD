@@ -1,0 +1,308 @@
+[
+  {
+    "image": [
+      "data/example/images/case0_CAM_JOINT.jpg"
+    ],
+    "conversations": [
+      {
+        "from": "human",
+        "value": "You are an autonomous driving assistant. Reason like a driver in three stages: first PERCEIVE the scene, then PREDICT how it will change, then PLAN what to do.\n\nINPUT:\n- Multi-view images: front-left, front, front-right\n- Ego state: speed=0.1 m/s, longitudinal acceleration=0.00 m/s^2\n- Driver instruction: GO_STRAIGHT\n- Past 1.5 s of ego positions at 0.1 s spacing (x forward, y left, meters):\n  (-0.18, 0.01); (-0.17, 0.01); (-0.16, 0.01); (-0.15, 0.01); (-0.14, 0.00); (-0.13, 0.00); (-0.13, 0.00); (-0.12, 0.00); (-0.11, 0.00); (-0.10, 0.00); (-0.09, 0.00); (-0.07, 0.00); (-0.06, 0.00); (-0.04, 0.00); (-0.02, 0.00); (0.00, 0.00)\n\nOUTPUT:\n- Return ONLY the completed JSON object. No commentary, no markdown fences.\n- Every field is mandatory. Do not leave any mask empty.\n- All planning fields (longitudinal, lateral, trajectory) must be mutually\n  consistent and must obey the instruction below unless a hazard makes it unsafe.\n\n\nFIELDS:\n1. critical_objects — an object with these 12 keys. For each key, give a value\n   that is either \"none\" (if absent) OR a short descriptor of AT MOST 2 words\n   naming the most salient instance (e.g. \"black car\", \"green light\",\n   \"orange cone\"):\n     - nearby_vehicle      (any car/truck around: ahead, oncoming, or side)\n     - pedestrian          (people on or near the road)\n     - cyclist             (bicycle / motorcycle / scooter)\n     - construction        (cone, barrier, work zone)\n     - traffic_element     (traffic light, stop sign, lane-marking sign)\n     - weather_condition   (lighting / weather, e.g. \"clear day\", \"wet night\")\n     - road_hazard         (debris, pothole, fire, blocked lane, fallen object)\n     - emergency_vehicle   (police, ambulance, fire truck)\n     - animal\n     - special_vehicle     (bus, trailer, construction truck)\n     - conflicting_vehicle (vehicle whose path may cross yours)\n     - door_opening_vehicle(parked car with a door opening)\n\n2. complexity — exactly one word:\n     \"complex\" if there are many vehicles/people OR any hazard\n       (fire, accident, blocked lane, emergency vehicle);\n     otherwise \"simple\".\n\n3. explanation — plain words, NO numbers. Three short parts, in this order:\n     Perceive: the road and lighting, plus the key vehicles, people, or hazards.\n     Predict:  what those vehicles and people are likely to do next.\n     Plan:     what you will therefore do, and why.\n\n4. future_meta_behavior.longitudinal — choose ONE of:\n     {speed up, slow down, keep speed, stop now}\n\n5. future_meta_behavior.lateral — choose ONE of:\n     {keep lane, turn left, turn right, change left, change right}\n   Follow GO_STRAIGHT unless a hazard makes it unsafe.\n\n6. trajectory — 10 waypoints, one every 0.5 s (covering the next 5 s).\n   Coordinate frame: origin (0, 0) = your current position; axes are ego-centric.\n     - forward: meters ahead. Strictly increasing unless stopping. Spacing\n       between consecutive points is about 0.0 m at current speed —\n       larger if speeding up, smaller if slowing, approaching 0 if stopping.\n     - lateral: meters to the side. + is LEFT, - is RIGHT, ~0 for straight.\n       When turning or changing lane, magnitude grows smoothly over time.\n   Both axes must vary smoothly (no jumps) and match the chosen longitudinal\n   and lateral behaviors. Example:\n       0.5s: forward=+00.0m, lateral=+00.0m\n       1.0s: forward=+00.0m, lateral=+00.0m\n       2.5s: forward=+00.2m, lateral=+00.0m\n       5.0s: forward=+00.4m, lateral=+00.0m\n       (lateral stays 00.0 for all 10 lines)\n\n{\"critical_objects\": {\"nearby_vehicle\": \"|<MASK>||<MASK>|\", \"pedestrian\": \"|<MASK>||<MASK>|\", \"cyclist\": \"|<MASK>||<MASK>|\", \"construction\": \"|<MASK>||<MASK>|\", \"traffic_element\": \"|<MASK>||<MASK>|\", \"weather_condition\": \"|<MASK>||<MASK>|\", \"road_hazard\": \"|<MASK>||<MASK>|\", \"emergency_vehicle\": \"|<MASK>||<MASK>|\", \"animal\": \"|<MASK>||<MASK>|\", \"special_vehicle\": \"|<MASK>||<MASK>|\", \"conflicting_vehicle\": \"|<MASK>||<MASK>|\", \"door_opening_vehicle\": \"|<MASK>||<MASK>|\"}, \"complexity\": \"|<MASK>|\", \"explanation\": \"|<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>|\", \"future_meta_behavior\": {\"longitudinal\": \"|<MASK>| |<MASK>|\", \"lateral\": \"|<MASK>| |<MASK>|\"}, \"trajectory\": \"0.5s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n1.0s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n1.5s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n2.0s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n2.5s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n3.0s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n3.5s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n4.0s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n4.5s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n5.0s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\"}\n"
+      },
+      {
+        "from": "gpt",
+        "value": "{\"critical_objects\": {\"nearby_vehicle\": \"vehicle<|NULL|>\", \"pedestrian\": \"none<|NULL|>\", \"cyclist\": \"none<|NULL|>\", \"construction\": \"none<|NULL|>\", \"traffic_element\": \"none<|NULL|>\", \"weather_condition\": \"none<|NULL|>\", \"road_hazard\": \"none<|NULL|>\", \"emergency_vehicle\": \"none<|NULL|>\", \"animal\": \"none<|NULL|>\", \"special_vehicle\": \"none<|NULL|>\", \"conflicting_vehicle\": \"none<|NULL|>\", \"door_opening_vehicle\": \"none<|NULL|>\"}, \"complexity\": \"simple\", \"explanation\": \"There are multiple vehicles visible ahead and slightly right, including a black suv and a white pickup truck. These vehicles are within close proximity, occupying the ego lane or adjacent lane, and their position indicates the ego must consider their presence to maintain safe spacing. No pedestrians, cyclists, or conflicting right-of-way vehicles are apparent. No traffic signals or road hazards are relevant in the immediate path. The ego vehicle is expected to keep lane and slow down or maintain speed safely in response to the leading vehicles, without needing lateral maneuvers.\", \"future_meta_behavior\": {\"longitudinal\": \"speed up\", \"lateral\": \"keep lane\"}, \"trajectory\": \"0.5s: forward=+00.0m, lateral=-00.0m\\n1.0s: forward=+00.0m, lateral=-00.0m\\n1.5s: forward=+00.1m, lateral=-00.0m\\n2.0s: forward=+00.1m, lateral=-00.0m\\n2.5s: forward=+00.2m, lateral=-00.0m\\n3.0s: forward=+00.3m, lateral=-00.0m\\n3.5s: forward=+00.4m, lateral=-00.0m\\n4.0s: forward=+00.7m, lateral=-00.0m\\n4.5s: forward=+01.0m, lateral=-00.0m\\n5.0s: forward=+01.6m, lateral=-00.0m\"}"
+      }
+    ],
+    "navigation_command": "GO_STRAIGHT",
+    "future waypoints": [
+      [
+        0.02154541015625,
+        -0.00146484375
+      ],
+      [
+        0.043731689453125,
+        -0.001953125
+      ],
+      [
+        0.06671142578125,
+        -0.00244140625
+      ],
+      [
+        0.090118408203125,
+        -0.00341796875
+      ],
+      [
+        0.113739013671875,
+        -0.00439453125
+      ],
+      [
+        0.137298583984375,
+        -0.0048828125
+      ],
+      [
+        0.160430908203125,
+        -0.005859375
+      ],
+      [
+        0.183197021484375,
+        -0.0068359375
+      ],
+      [
+        0.206939697265625,
+        -0.00732421875
+      ],
+      [
+        0.2318115234375,
+        -0.00830078125
+      ],
+      [
+        0.259918212890625,
+        -0.0087890625
+      ],
+      [
+        0.30462646484375,
+        -0.01025390625
+      ],
+      [
+        0.371673583984375,
+        -0.0126953125
+      ],
+      [
+        0.461578369140625,
+        -0.0166015625
+      ],
+      [
+        0.5758056640625,
+        -0.02099609375
+      ],
+      [
+        0.715911865234375,
+        -0.02734375
+      ],
+      [
+        0.887786865234375,
+        -0.03515625
+      ],
+      [
+        1.099884033203125,
+        -0.044921875
+      ],
+      [
+        1.3533935546875,
+        -0.05615234375
+      ],
+      [
+        1.6488037109375,
+        -0.0703125
+      ]
+    ],
+    "meta_speed": "accelerate",
+    "meta_direction": "keep_lane",
+    "sample_id": "13315_79855ab9d8129a8fa40d5918219b9503_114",
+    "complexity": "simple"
+  },
+  {
+    "image": [
+      "data/example/images/case1_CAM_JOINT.jpg"
+    ],
+    "conversations": [
+      {
+        "from": "human",
+        "value": "You are an autonomous driving assistant. Reason like a driver in three stages: first PERCEIVE the scene, then PREDICT how it will change, then PLAN what to do.\n\nINPUT:\n- Multi-view images: front-left, front, front-right\n- Ego state: speed=0.5 m/s, longitudinal acceleration=-0.03 m/s^2\n- Driver instruction: GO_STRAIGHT\n- Past 1.5 s of ego positions at 0.1 s spacing (x forward, y left, meters):\n  (-1.49, 0.01); (-1.49, 0.01); (-1.49, 0.01); (-1.49, 0.01); (-1.47, 0.01); (-1.42, 0.01); (-1.33, 0.01); (-1.19, 0.01); (-1.02, 0.01); (-0.85, 0.01); (-0.69, 0.01); (-0.54, 0.01); (-0.40, 0.00); (-0.26, 0.00); (-0.13, 0.00); (0.00, 0.00)\n\nOUTPUT:\n- Return ONLY the completed JSON object. No commentary, no markdown fences.\n- Every field is mandatory. Do not leave any mask empty.\n- All planning fields (longitudinal, lateral, trajectory) must be mutually\n  consistent and must obey the instruction below unless a hazard makes it unsafe.\n\n\nFIELDS:\n1. critical_objects — an object with these 12 keys. For each key, give a value\n   that is either \"none\" (if absent) OR a short descriptor of AT MOST 2 words\n   naming the most salient instance (e.g. \"black car\", \"green light\",\n   \"orange cone\"):\n     - nearby_vehicle      (any car/truck around: ahead, oncoming, or side)\n     - pedestrian          (people on or near the road)\n     - cyclist             (bicycle / motorcycle / scooter)\n     - construction        (cone, barrier, work zone)\n     - traffic_element     (traffic light, stop sign, lane-marking sign)\n     - weather_condition   (lighting / weather, e.g. \"clear day\", \"wet night\")\n     - road_hazard         (debris, pothole, fire, blocked lane, fallen object)\n     - emergency_vehicle   (police, ambulance, fire truck)\n     - animal\n     - special_vehicle     (bus, trailer, construction truck)\n     - conflicting_vehicle (vehicle whose path may cross yours)\n     - door_opening_vehicle(parked car with a door opening)\n\n2. complexity — exactly one word:\n     \"complex\" if there are many vehicles/people OR any hazard\n       (fire, accident, blocked lane, emergency vehicle);\n     otherwise \"simple\".\n\n3. explanation — plain words, NO numbers. Three short parts, in this order:\n     Perceive: the road and lighting, plus the key vehicles, people, or hazards.\n     Predict:  what those vehicles and people are likely to do next.\n     Plan:     what you will therefore do, and why.\n\n4. future_meta_behavior.longitudinal — choose ONE of:\n     {speed up, slow down, keep speed, stop now}\n\n5. future_meta_behavior.lateral — choose ONE of:\n     {keep lane, turn left, turn right, change left, change right}\n   Follow GO_STRAIGHT unless a hazard makes it unsafe.\n\n6. trajectory — 10 waypoints, one every 0.5 s (covering the next 5 s).\n   Coordinate frame: origin (0, 0) = your current position; axes are ego-centric.\n     - forward: meters ahead. Strictly increasing unless stopping. Spacing\n       between consecutive points is about 0.2 m at current speed —\n       larger if speeding up, smaller if slowing, approaching 0 if stopping.\n     - lateral: meters to the side. + is LEFT, - is RIGHT, ~0 for straight.\n       When turning or changing lane, magnitude grows smoothly over time.\n   Both axes must vary smoothly (no jumps) and match the chosen longitudinal\n   and lateral behaviors. Example:\n       0.5s: forward=+00.2m, lateral=+00.0m\n       1.0s: forward=+00.4m, lateral=+00.0m\n       2.5s: forward=+01.2m, lateral=+00.0m\n       5.0s: forward=+02.4m, lateral=+00.0m\n       (lateral stays 00.0 for all 10 lines)\n\n{\"critical_objects\": {\"nearby_vehicle\": \"|<MASK>||<MASK>|\", \"pedestrian\": \"|<MASK>||<MASK>|\", \"cyclist\": \"|<MASK>||<MASK>|\", \"construction\": \"|<MASK>||<MASK>|\", \"traffic_element\": \"|<MASK>||<MASK>|\", \"weather_condition\": \"|<MASK>||<MASK>|\", \"road_hazard\": \"|<MASK>||<MASK>|\", \"emergency_vehicle\": \"|<MASK>||<MASK>|\", \"animal\": \"|<MASK>||<MASK>|\", \"special_vehicle\": \"|<MASK>||<MASK>|\", \"conflicting_vehicle\": \"|<MASK>||<MASK>|\", \"door_opening_vehicle\": \"|<MASK>||<MASK>|\"}, \"complexity\": \"|<MASK>|\", \"explanation\": \"|<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>|\", \"future_meta_behavior\": {\"longitudinal\": \"|<MASK>| |<MASK>|\", \"lateral\": \"|<MASK>| |<MASK>|\"}, \"trajectory\": \"0.5s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n1.0s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n1.5s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n2.0s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n2.5s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n3.0s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n3.5s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n4.0s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n4.5s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n5.0s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\"}\n"
+      },
+      {
+        "from": "gpt",
+        "value": "{\"critical_objects\": {\"nearby_vehicle\": \"vehicle<|NULL|>\", \"pedestrian\": \"none<|NULL|>\", \"cyclist\": \"none<|NULL|>\", \"construction\": \"none<|NULL|>\", \"traffic_element\": \"traffic light\", \"weather_condition\": \"none<|NULL|>\", \"road_hazard\": \"none<|NULL|>\", \"emergency_vehicle\": \"none<|NULL|>\", \"animal\": \"none<|NULL|>\", \"special_vehicle\": \"none<|NULL|>\", \"conflicting_vehicle\": \"none<|NULL|>\", \"door_opening_vehicle\": \"none<|NULL|>\"}, \"complexity\": \"complex\", \"explanation\": \"A nearby UPS truck is positioned on the right side of the road within the lane, close enough to impact the ego vehicle's path within the next seconds. The truck is currently stationary or moving slowly, requiring the ego car to adjust speed or lateral position. Additionally, a traffic signal ahead shows an amber or caution light visible to the ego vehicle, indicating the need to prepare to stop or adjust speed accordingly. These elements together imply that the ego vehicle must slow down and maintain lane to safely navigate the intersection.\", \"future_meta_behavior\": {\"longitudinal\": \"stop now\", \"lateral\": \"turn left\"}, \"trajectory\": \"0.5s: forward=+00.2m, lateral=-00.0m\\n1.0s: forward=+00.4m, lateral=-00.0m\\n1.5s: forward=+00.4m, lateral=-00.0m\\n2.0s: forward=+00.4m, lateral=-00.0m\\n2.5s: forward=+00.4m, lateral=-00.0m\\n3.0s: forward=+00.4m, lateral=-00.0m\\n3.5s: forward=+00.4m, lateral=-00.0m\\n4.0s: forward=+00.4m, lateral=-00.0m\\n4.5s: forward=+00.4m, lateral=-00.0m\\n5.0s: forward=+00.4m, lateral=-00.0m\"}"
+      }
+    ],
+    "navigation_command": "GO_STRAIGHT",
+    "future waypoints": [
+      [
+        0.12103271484375,
+        -0.001708984375
+      ],
+      [
+        0.23748779296875,
+        -0.00341796875
+      ],
+      [
+        0.3385009765625,
+        -0.005126953125
+      ],
+      [
+        0.41241455078125,
+        -0.0064697265625
+      ],
+      [
+        0.454742431640625,
+        -0.00732421875
+      ],
+      [
+        0.45867919921875,
+        -0.0072021484375
+      ],
+      [
+        0.4560546875,
+        -0.0072021484375
+      ],
+      [
+        0.4554443359375,
+        -0.007080078125
+      ],
+      [
+        0.45562744140625,
+        -0.0072021484375
+      ],
+      [
+        0.454986572265625,
+        -0.0072021484375
+      ],
+      [
+        0.454925537109375,
+        -0.0072021484375
+      ],
+      [
+        0.454620361328125,
+        -0.0072021484375
+      ],
+      [
+        0.454620361328125,
+        -0.0072021484375
+      ],
+      [
+        0.454620361328125,
+        -0.0072021484375
+      ],
+      [
+        0.454620361328125,
+        -0.0072021484375
+      ],
+      [
+        0.454620361328125,
+        -0.0072021484375
+      ],
+      [
+        0.454620361328125,
+        -0.0072021484375
+      ],
+      [
+        0.454620361328125,
+        -0.0072021484375
+      ],
+      [
+        0.454620361328125,
+        -0.007080078125
+      ],
+      [
+        0.454620361328125,
+        -0.007080078125
+      ]
+    ],
+    "meta_speed": "stop",
+    "meta_direction": "left_turn",
+    "sample_id": "42247_38abb0d354833b6b4ba4f6078bdb617d_34",
+    "complexity": "complex"
+  },
+  {
+    "image": [
+      "data/example/images/case2_CAM_JOINT.jpg"
+    ],
+    "conversations": [
+      {
+        "from": "human",
+        "value": "You are an autonomous driving assistant. Reason like a driver in three stages: first PERCEIVE the scene, then PREDICT how it will change, then PLAN what to do.\n\nINPUT:\n- Multi-view images: front-left, front, front-right\n- Ego state: speed=0.0 m/s, longitudinal acceleration=0.00 m/s^2\n- Driver instruction: GO_STRAIGHT\n- Past 1.5 s of ego positions at 0.1 s spacing (x forward, y left, meters):\n  (0.01, 0.00); (0.00, 0.00); (0.00, 0.00); (0.00, 0.00); (0.00, 0.00); (0.00, 0.00); (0.00, 0.00); (0.00, 0.00); (0.00, 0.00); (0.00, 0.00); (0.00, 0.00); (0.00, 0.00); (0.00, 0.00); (0.00, 0.00); (0.00, 0.00); (0.00, 0.00)\n\nOUTPUT:\n- Return ONLY the completed JSON object. No commentary, no markdown fences.\n- Every field is mandatory. Do not leave any mask empty.\n- All planning fields (longitudinal, lateral, trajectory) must be mutually\n  consistent and must obey the instruction below unless a hazard makes it unsafe.\n\n\nFIELDS:\n1. critical_objects — an object with these 12 keys. For each key, give a value\n   that is either \"none\" (if absent) OR a short descriptor of AT MOST 2 words\n   naming the most salient instance (e.g. \"black car\", \"green light\",\n   \"orange cone\"):\n     - nearby_vehicle      (any car/truck around: ahead, oncoming, or side)\n     - pedestrian          (people on or near the road)\n     - cyclist             (bicycle / motorcycle / scooter)\n     - construction        (cone, barrier, work zone)\n     - traffic_element     (traffic light, stop sign, lane-marking sign)\n     - weather_condition   (lighting / weather, e.g. \"clear day\", \"wet night\")\n     - road_hazard         (debris, pothole, fire, blocked lane, fallen object)\n     - emergency_vehicle   (police, ambulance, fire truck)\n     - animal\n     - special_vehicle     (bus, trailer, construction truck)\n     - conflicting_vehicle (vehicle whose path may cross yours)\n     - door_opening_vehicle(parked car with a door opening)\n\n2. complexity — exactly one word:\n     \"complex\" if there are many vehicles/people OR any hazard\n       (fire, accident, blocked lane, emergency vehicle);\n     otherwise \"simple\".\n\n3. explanation — plain words, NO numbers. Three short parts, in this order:\n     Perceive: the road and lighting, plus the key vehicles, people, or hazards.\n     Predict:  what those vehicles and people are likely to do next.\n     Plan:     what you will therefore do, and why.\n\n4. future_meta_behavior.longitudinal — choose ONE of:\n     {speed up, slow down, keep speed, stop now}\n\n5. future_meta_behavior.lateral — choose ONE of:\n     {keep lane, turn left, turn right, change left, change right}\n   Follow GO_STRAIGHT unless a hazard makes it unsafe.\n\n6. trajectory — 10 waypoints, one every 0.5 s (covering the next 5 s).\n   Coordinate frame: origin (0, 0) = your current position; axes are ego-centric.\n     - forward: meters ahead. Strictly increasing unless stopping. Spacing\n       between consecutive points is about 0.0 m at current speed —\n       larger if speeding up, smaller if slowing, approaching 0 if stopping.\n     - lateral: meters to the side. + is LEFT, - is RIGHT, ~0 for straight.\n       When turning or changing lane, magnitude grows smoothly over time.\n   Both axes must vary smoothly (no jumps) and match the chosen longitudinal\n   and lateral behaviors. Example:\n       0.5s: forward=+00.0m, lateral=+00.0m\n       1.0s: forward=+00.0m, lateral=+00.0m\n       2.5s: forward=+00.0m, lateral=+00.0m\n       5.0s: forward=+00.0m, lateral=+00.0m\n       (lateral stays 00.0 for all 10 lines)\n\n{\"critical_objects\": {\"nearby_vehicle\": \"|<MASK>||<MASK>|\", \"pedestrian\": \"|<MASK>||<MASK>|\", \"cyclist\": \"|<MASK>||<MASK>|\", \"construction\": \"|<MASK>||<MASK>|\", \"traffic_element\": \"|<MASK>||<MASK>|\", \"weather_condition\": \"|<MASK>||<MASK>|\", \"road_hazard\": \"|<MASK>||<MASK>|\", \"emergency_vehicle\": \"|<MASK>||<MASK>|\", \"animal\": \"|<MASK>||<MASK>|\", \"special_vehicle\": \"|<MASK>||<MASK>|\", \"conflicting_vehicle\": \"|<MASK>||<MASK>|\", \"door_opening_vehicle\": \"|<MASK>||<MASK>|\"}, \"complexity\": \"|<MASK>|\", \"explanation\": \"|<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>||<MASK>|\", \"future_meta_behavior\": {\"longitudinal\": \"|<MASK>| |<MASK>|\", \"lateral\": \"|<MASK>| |<MASK>|\"}, \"trajectory\": \"0.5s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n1.0s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n1.5s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n2.0s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n2.5s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n3.0s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n3.5s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n4.0s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n4.5s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\\n5.0s: forward=|<MASK>||<MASK>||<MASK>|.|<MASK>|m, lateral=|<MASK>||<MASK>||<MASK>|.|<MASK>|m\"}\n"
+      },
+      {
+        "from": "gpt",
+        "value": "{\"critical_objects\": {\"nearby_vehicle\": \"none<|NULL|>\", \"pedestrian\": \"none<|NULL|>\", \"cyclist\": \"none<|NULL|>\", \"construction\": \"none<|NULL|>\", \"traffic_element\": \"traffic light\", \"weather_condition\": \"none<|NULL|>\", \"road_hazard\": \"none<|NULL|>\", \"emergency_vehicle\": \"none<|NULL|>\", \"animal\": \"none<|NULL|>\", \"special_vehicle\": \"none<|NULL|>\", \"conflicting_vehicle\": \"none<|NULL|>\", \"door_opening_vehicle\": \"none<|NULL|>\"}, \"complexity\": \"complex\", \"explanation\": \"The traffic element includes the visible red traffic light ahead, which requires the ego vehicle to stop and remain stationary. No other vehicles, pedestrians, or hazards are present that would impact immediate behavior. The ego vehicle will be stopped and waiting at the red light.\", \"future_meta_behavior\": {\"longitudinal\": \"stop now\", \"lateral\": \"keep lane\"}, \"trajectory\": \"0.5s: forward=+00.0m, lateral=+00.0m\\n1.0s: forward=+00.0m, lateral=+00.0m\\n1.5s: forward=+00.0m, lateral=+00.0m\\n2.0s: forward=+00.0m, lateral=+00.0m\\n2.5s: forward=+00.0m, lateral=+00.0m\\n3.0s: forward=+00.0m, lateral=+00.0m\\n3.5s: forward=+00.0m, lateral=+00.0m\\n4.0s: forward=+00.0m, lateral=+00.0m\\n4.5s: forward=+00.0m, lateral=+00.0m\\n5.0s: forward=+00.0m, lateral=+00.0m\"}"
+      }
+    ],
+    "navigation_command": "GO_STRAIGHT",
+    "future waypoints": [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.00146484375,
+        0.0
+      ],
+      [
+        0.015625,
+        0.0
+      ]
+    ],
+    "meta_speed": "stop",
+    "meta_direction": "keep_lane",
+    "sample_id": "243627_0bd5fa653c6a1443f3a6efe08412506e_107",
+    "complexity": "complex"
+  }
+]
