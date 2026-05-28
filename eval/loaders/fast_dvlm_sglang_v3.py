@@ -445,7 +445,9 @@ def generate(bundle, image_paths, question, max_new_tokens=None, temperature=0.0
         # rep_penalty * count_so_far. Plus within-step dedup ensures top-K
         # commits in one step pick distinct tokens.
         "dllm_template_rep_penalty_positions": rep_positions,
-        "dllm_template_rep_penalty": 2.0,
+        "dllm_template_rep_penalty": float(kwargs.get("rep_penalty", 0.0)),
+        # Fast-dDrive confidence threshold for commit (default 0.9).
+        "dllm_template_threshold": float(kwargs.get("threshold", 0.9)),
         # Steps per chunk (caller override → default 4). 4 = fast (1.7-2s)
         # but coarser ADE; 8 = closer to transformers loader's ADE at 2-3s.
         "dllm_template_steps_per_chunk": kwargs.get("steps_per_chunk", 4),

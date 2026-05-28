@@ -30,7 +30,7 @@ CRITICAL_CATEGORIES = [
 # critical_objects: 2 mask tokens per category — just enough for "none" or a
 # short 2-token phrase like "black car" / "green light".
 N_CRITICAL_TOKENS = 2
-N_EXPLANATION_TOKENS = 100
+N_EXPLANATION_TOKENS = 64
 
 # Trajectory: 10 waypoints @ 2 Hz (0.5 s spacing) covering 5 s horizon.
 # Each waypoint = `<sign><tens><ones>.<frac>,<sign><tens><ones>.<frac>` with

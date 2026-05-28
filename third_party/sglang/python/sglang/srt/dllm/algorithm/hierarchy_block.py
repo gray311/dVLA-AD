@@ -35,6 +35,11 @@ class HierarchyBlock(DllmAlgorithm):
         self.last_inherited_token = None
         self.last_block_end_position = None
         self.tokenizer = None
+        # Fast-dDrive `mdm_sample_deep_scaffold` style: the logit at the LAST
+        # position of the prior chunk's final-commit forward. Used as the
+        # predictor for position 0 of the next chunk (proper off-by-one
+        # alignment for next-token AR-style lm_head). Reset on new request.
+        self.prev_last_logit = None  # [1, V] tensor or None
         # Cross-chunk repetition counts for template-mode rep-penalty
         # positions. Reset on new request.
         self.rep_token_counts = None
@@ -114,6 +119,7 @@ class HierarchyBlock(DllmAlgorithm):
                 self.rep_token_counts = None
                 self.fwd_count = 0  # reset for benchmarking
                 self._logged_mode_this_req = False
+                self.prev_last_logit = None  # reset for dDrive off-by-one shift
 
         # Handle token inheritance for all-mask blocks (skip in template mode —
         # template scaffold at position 0 must stay intact; if position 0 IS a
@@ -144,38 +150,38 @@ class HierarchyBlock(DllmAlgorithm):
         forbidden_mask = None
 
         # ============================================================
-        # TEMPLATE-MODE PATH: fixed-step chunk-level diffusion.
-        # Matches the transformers loader: N steps, top-K budget, plus
-        # cross-step rep penalty + within-step token dedup at rep positions.
-        # Skips sub-block iteration — Fast-dVLM's bidir attention within
-        # block already gives all positions full visibility.
+        # TEMPLATE-MODE PATH: Fast-dDrive `mdm_sample_deep_scaffold`
+        # algorithm (port of generation_utils.py:mdm_sample_deep_scaffold).
+        #
+        # Per chunk, iterate up to (n_masks + 5) times:
+        #   1. Bidir forward over current chunk (encoder-only attention).
+        #   2. Token shift: position i predicted by logit at position i-1.
+        #      Position 0's predictor = self.prev_last_logit (captured from
+        #      prior chunk's final commit forward). For the very first chunk
+        #      we fall back to full_logits[:1] (slight off-by-one, but
+        #      position 0 of first chunk is usually scaffold not mask).
+        #   3. Argmax + softmax confidence at the shifted-logit row.
+        #   4. Commit positions whose conf > threshold (default 0.9).
+        #   5. If none cleared the threshold, fallback: commit the single
+        #      highest-conf masked position.
+        #
+        # After the per-chunk loop, the final commit forward (below) writes
+        # this chunk's K/V to cache AND captures self.prev_last_logit for
+        # the next chunk.
+        #
+        # NO per-position gates / forbidden / rep-penalty / dedup — those
+        # are our additions that don't match dDrive's recipe. To match
+        # dDrive's "explanation as clean as no-template" behavior we use the
+        # clean algorithm.
         # ============================================================
         if is_template_mode:
-            rep_chunk_pos_list = getattr(
-                forward_batch, "dllm_template_rep_penalty_chunk_positions", None,
-            ) or []
-            rep_penalty = getattr(forward_batch, "dllm_template_rep_penalty", 0.0)
-            n_steps = max(1, getattr(forward_batch, "dllm_template_steps_per_chunk", 4))
-
-            # Confidence-threshold mode (Fast-dDrive style). When env
-            # SGLANG_DLLM_THRESHOLD > 0, switch from fixed-K-per-step to
-            # "commit all positions with conf > threshold; fallback top-1".
-            # max_iter cap (default 8) bounds worst-case forwards/chunk.
             import os as _os
-            _thresh_env = _os.environ.get("SGLANG_DLLM_THRESHOLD", "")
-            try:
-                _thresh = float(_thresh_env) if _thresh_env else 0.0
-            except ValueError:
-                _thresh = 0.0
-            use_threshold_mode = _thresh > 0.0
-            max_iter_cap = int(_os.environ.get("SGLANG_DLLM_MAX_ITER", "8"))
+            threshold = float(getattr(forward_batch, "dllm_template_threshold", 0.9) or 0.9)
             if _os.environ.get("DLLM_FWD_LOG"):
-                # One-time per-chunk debug to confirm which path is active.
                 if not getattr(self, "_logged_mode_this_req", False):
                     print(
-                        f"[HierarchyBlock] template-mode path: "
-                        f"use_threshold={use_threshold_mode} thresh={_thresh} "
-                        f"max_iter={max_iter_cap}",
+                        f"[HierarchyBlock] template-mode path: dDrive mdm "
+                        f"threshold={threshold}",
                         flush=True,
                     )
                     self._logged_mode_this_req = True
@@ -184,30 +190,12 @@ class HierarchyBlock(DllmAlgorithm):
             n_mask_chunk = int(chunk_mask.sum().item())
 
             if n_mask_chunk > 0:
-                if use_threshold_mode:
-                    # No pre-distributed K; iterate up to max_iter_cap.
-                    # `k_per_step` stays None so the inner loop uses the
-                    # threshold selector. Stop early once no masks remain
-                    # OR no position cleared the threshold AND fallback
-                    # commits saturate (handled inside the loop).
-                    iter_count = max_iter_cap
-                    budget = [None] * iter_count
-                else:
-                    # Pre-distribute commit budget across n_steps so all masks
-                    # get committed by the last step. Same as transformers loader.
-                    base = max(1, n_mask_chunk // n_steps)
-                    remainder = n_mask_chunk % n_steps
-                    budget = [base + (1 if i < remainder else 0) for i in range(n_steps)]
-                    # Trim trailing zero-budget steps.
-                    while budget and budget[-1] == 0:
-                        budget.pop()
-
-                rep_chunk_pos_set = set(rep_chunk_pos_list)
-
-                for step_idx, k in enumerate(budget):
+                max_iter = n_mask_chunk + 5
+                for _it in range(max_iter):
                     cur_mask = forward_batch.input_ids == self.mask_id
                     if not cur_mask.any():
                         break
+
                     self.fwd_count += 1
                     out = model_runner.forward(forward_batch, pp_proxy_tensors=None)
                     logits_output, can_run_cuda_graph = (
@@ -215,153 +203,45 @@ class HierarchyBlock(DllmAlgorithm):
                     )
                     full_logits = logits_output.full_logits
                     assert full_logits is not None
+                    # [B, V]
 
-                    if self.token_shift > 0:
+                    # Proper off-by-one shift: position i's predictor is the
+                    # logit at position i-1. For position 0, that's the LAST
+                    # logit from the prior chunk's final commit forward,
+                    # stored in self.prev_last_logit. If unavailable (first
+                    # chunk), use this chunk's full_logits[:1] as
+                    # approximation.
+                    if self.prev_last_logit is not None:
+                        shifted = torch.cat(
+                            [self.prev_last_logit.to(full_logits.device,
+                                                     dtype=full_logits.dtype),
+                             full_logits[:-1]],
+                            dim=0,
+                        )
+                    elif self.token_shift > 0:
                         shifted = torch.cat([full_logits[:1], full_logits[:-1]], dim=0)
                     else:
                         shifted = full_logits
 
-                    vocab_size = shifted.shape[-1]
-                    device = shifted.device
-
-                    # Build masks lazily (first step) and reuse across steps.
-                    if forbidden_ids and forbidden_mask is None:
-                        forbidden_mask = torch.zeros(vocab_size, dtype=torch.bool, device=device)
-                        for bid in forbidden_ids:
-                            if 0 <= bid < vocab_size:
-                                forbidden_mask[bid] = True
-                    if chunk_gates is not None and gate_block_keep is None:
-                        block_size = forward_batch.input_ids.shape[0]
-                        gate_block_keep = torch.ones(
-                            (block_size, vocab_size), dtype=torch.bool, device=device,
-                        )
-                        gate_block_active = torch.zeros(
-                            block_size, dtype=torch.bool, device=device,
-                        )
-                        for lp, allowed in enumerate(chunk_gates):
-                            if allowed is None or lp >= block_size:
-                                continue
-                            gate_block_active[lp] = True
-                            keep = torch.zeros(vocab_size, dtype=torch.bool, device=device)
-                            for aid in allowed:
-                                if 0 <= aid < vocab_size:
-                                    keep[aid] = True
-                            gate_block_keep[lp] = keep
-
-                    # Apply forbidden mask globally.
-                    if forbidden_mask is not None:
-                        shifted[:, forbidden_mask] = float("-inf")
-                    # Apply per-position gates.
-                    if gate_block_active is not None and gate_block_active.any():
-                        block_minf = torch.full_like(shifted, float("-inf"))
-                        restricted = torch.where(gate_block_keep, shifted, block_minf)
-                        shifted = torch.where(
-                            gate_block_active.unsqueeze(-1), restricted, shifted,
-                        )
-
-                    # Cross-step rep penalty at rep positions.
-                    if (rep_penalty > 0 and rep_chunk_pos_list
-                            and self.rep_token_counts is not None
-                            and self.rep_token_counts.numel() == vocab_size):
-                        rep_pos_t = torch.tensor(
-                            rep_chunk_pos_list, dtype=torch.long, device=device,
-                        )
-                        shifted[rep_pos_t] -= rep_penalty * self.rep_token_counts.unsqueeze(0)
-                    if (rep_penalty > 0 and rep_chunk_pos_list
-                            and self.rep_token_counts is None):
-                        self.rep_token_counts = torch.zeros(
-                            vocab_size, dtype=torch.float, device=device,
-                        )
-
-                    preds = shifted.argmax(dim=-1)
+                    # Argmax + confidence at each position
+                    preds = shifted.argmax(dim=-1)  # [B]
                     probs = F.softmax(shifted, dim=-1)
                     conf = probs.gather(dim=-1, index=preds.unsqueeze(-1)).squeeze(-1)
-                    # Restrict transfer candidates to currently-masked positions.
+                    # Mask out positions that are no longer masked.
                     conf = torch.where(
-                        cur_mask, conf, torch.tensor(-np.inf, device=device),
+                        cur_mask, conf, torch.tensor(-np.inf, device=conf.device),
                     )
 
-                    if use_threshold_mode:
-                        # Commit all positions whose conf cleared threshold.
-                        unmask = (conf > _thresh) & cur_mask
-                        if unmask.any():
-                            topk_idx = unmask.nonzero(as_tuple=False).squeeze(-1)
-                        else:
-                            # Fallback: commit single highest-confidence mask.
-                            best = int(conf.argmax().item())
-                            topk_idx = torch.tensor(
-                                [best], dtype=torch.long, device=device,
-                            )
-                    else:
-                        k_actual = min(k, int(cur_mask.sum().item()))
-                        if k_actual <= 0:
-                            continue
-                        topk_idx = torch.topk(conf, k_actual).indices
-
-                    # Within-step dedup at rep positions: ensure no two
-                    # rep-position commits share the same token in this step.
-                    if rep_chunk_pos_set and topk_idx.numel() > 1:
-                        rep_in_top = [
-                            int(p) for p in topk_idx.tolist()
-                            if int(p) in rep_chunk_pos_set
-                        ]
-                        if len(rep_in_top) > 1:
-                            # Sort by confidence descending.
-                            rep_in_top.sort(
-                                key=lambda lp: -float(conf[lp].item()),
-                            )
-                            claimed = set()
-                            minus_inf = float("-inf")
-                            for lp in rep_in_top:
-                                cur_tok = int(preds[lp].item())
-                                if cur_tok not in claimed:
-                                    claimed.add(cur_tok)
-                                    continue
-                                # Pick the best alternative not in claimed.
-                                row = shifted[lp].clone()
-                                for t in claimed:
-                                    row[t] = minus_inf
-                                new_tok = int(row.argmax().item())
-                                preds[lp] = new_tok
-                                claimed.add(new_tok)
-
-                    # Commit.
-                    forward_batch.input_ids[topk_idx] = preds[topk_idx]
-
-                    # Update rep counts for newly-committed rep positions.
-                    if rep_penalty > 0 and rep_chunk_pos_set and self.rep_token_counts is not None:
-                        for p in topk_idx.tolist():
-                            if int(p) in rep_chunk_pos_set:
-                                tok = int(forward_batch.input_ids[int(p)].item())
-                                if 0 <= tok < self.rep_token_counts.shape[0]:
-                                    self.rep_token_counts[tok] += 1.0
-
-                # If any masks remain (shouldn't happen with correct budget),
-                # force-commit them in a final pass.
-                cur_mask = forward_batch.input_ids == self.mask_id
-                if cur_mask.any():
-                    self.fwd_count += 1
-                    out = model_runner.forward(forward_batch, pp_proxy_tensors=None)
-                    logits_output, can_run_cuda_graph = (
-                        out.logits_output, out.can_run_graph,
-                    )
-                    full_logits = logits_output.full_logits
-                    if self.token_shift > 0:
-                        shifted = torch.cat([full_logits[:1], full_logits[:-1]], dim=0)
-                    else:
-                        shifted = full_logits
-                    if forbidden_mask is not None:
-                        shifted[:, forbidden_mask] = float("-inf")
-                    if gate_block_active is not None and gate_block_active.any():
-                        block_minf = torch.full_like(shifted, float("-inf"))
-                        restricted = torch.where(gate_block_keep, shifted, block_minf)
-                        shifted = torch.where(
-                            gate_block_active.unsqueeze(-1), restricted, shifted,
+                    # Commit positions with conf > threshold.
+                    unmask = conf > threshold
+                    if unmask.any():
+                        forward_batch.input_ids = torch.where(
+                            unmask, preds, forward_batch.input_ids,
                         )
-                    preds = shifted.argmax(dim=-1)
-                    forward_batch.input_ids = torch.where(
-                        cur_mask, preds, forward_batch.input_ids,
-                    )
+                    else:
+                        # Fallback: commit single highest-conf masked position.
+                        best_pos = int(conf.argmax().item())
+                        forward_batch.input_ids[best_pos] = int(preds[best_pos].item())
             else:
                 # All scaffold, no masks — single forward to advance KV cache.
                 self.fwd_count += 1
@@ -514,6 +394,11 @@ class HierarchyBlock(DllmAlgorithm):
 
         if full_logits is not None:
             self.last_inherited_token = full_logits[-1].argmax().item()
+            # dDrive-style: capture the last position's logit for the next
+            # chunk's position-0 prediction (proper off-by-one alignment).
+            # detach() so we don't keep gradient state across forwards.
+            if is_template_mode:
+                self.prev_last_logit = full_logits[-1:].detach().clone()
 
         # Update position tracking
         if hasattr(forward_batch, 'positions') and forward_batch.positions is not None:

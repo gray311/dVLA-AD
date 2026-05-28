@@ -64,6 +64,7 @@ class SamplingParams:
         dllm_template_forbidden_token_ids: Optional[List[int]] = None,
         dllm_template_rep_penalty_positions: Optional[List[int]] = None,
         dllm_template_rep_penalty: float = 2.0,
+        dllm_template_threshold: float = 0.9,
         dllm_template_steps_per_chunk: int = 4,
         dllm_template_chunk_sizes: Optional[List[int]] = None,
     ) -> None:
@@ -120,6 +121,10 @@ class SamplingParams:
         # cascades like "a a a a" / "the the the".
         self.dllm_template_rep_penalty_positions = dllm_template_rep_penalty_positions
         self.dllm_template_rep_penalty = dllm_template_rep_penalty
+        # Fast-dDrive style confidence threshold for template-mode commit.
+        # Each diffusion step commits positions whose post-softmax conf >
+        # threshold; fallback to single highest-conf if none clear.
+        self.dllm_template_threshold = dllm_template_threshold
         # Fixed step count per chunk in template mode. Larger N = more
         # iterations = better quality but slower. Default 4 matches the
         # transformers loader.

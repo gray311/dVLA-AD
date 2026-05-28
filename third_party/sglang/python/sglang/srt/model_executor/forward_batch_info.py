@@ -295,6 +295,8 @@ class ForwardBatch:
     dllm_template_rep_penalty: float = 0.0
     # Fixed-step budget for template mode.
     dllm_template_steps_per_chunk: int = 4
+    # Fast-dDrive confidence threshold for template-mode commit.
+    dllm_template_threshold: float = 0.9
 
     # For extend
     extend_num_tokens: Optional[int] = None
@@ -551,6 +553,8 @@ class ForwardBatch:
                 ret.dllm_template_rep_penalty = batch.dllm_template_rep_penalty[0]
             if batch.dllm_template_steps_per_chunk:
                 ret.dllm_template_steps_per_chunk = batch.dllm_template_steps_per_chunk[0]
+            if getattr(batch, "dllm_template_threshold", None):
+                ret.dllm_template_threshold = batch.dllm_template_threshold[0]
         elif (
             ret.spec_info is not None
             and getattr(ret.spec_info, "positions", None) is not None
