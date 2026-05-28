@@ -131,14 +131,17 @@ class SectionEvalCallback(TrainerCallback):
 
     def _score(self, resp, c):
         r = {"resp": resp, "json": False, "sec": False, "cx": None, "lo": None, "la": None,
-             "crit_hit": 0, "ade": None, "expl": ""}
+             "crit_hit": 0, "ade": None, "expl": "", "jerr": "", "raw": resp[:600]}
         blob = _first_json(resp)
         obj = None
-        if blob:
+        if blob is None:
+            r["jerr"] = "no {...}"
+        else:
             try:
                 obj = json.loads(blob); r["json"] = True
-            except Exception:
+            except Exception as e:
                 obj = None
+                r["jerr"] = str(e)[:70]
         gt = c["gt"]
         if obj:
             r["sec"] = all(k in obj for k in ("critical_objects", "complexity", "explanation",
@@ -176,10 +179,16 @@ class SectionEvalCallback(TrainerCallback):
               f"traj_ADE={sum(ades)/len(ades):.2f}({len(ades)})" if ades else
               f"  json_valid={jv}/{n} sections_ok={sc}/{n} complexity_acc={acc(cx)} "
               f"fmb_long={acc(lo)} fmb_lat={acc(la)} critical_exact={crit}/{12*n} traj_ADE=n/a")
-        # one qualitative example
+        # JSON parse-error breakdown (why json_valid is low)
+        if jv < len(ok):
+            from collections import Counter
+            errs = Counter(r["jerr"] for r in ok if not r["json"])
+            print("  json_errors: " + " | ".join(f"{c}x {e}" for e, c in errs.most_common(4)))
+        # one qualitative example + its RAW output
         ex = ok[0] if ok else None
         if ex:
             print(f"  e.g. complexity={ex['cx']} fmb=({ex['lo']},{ex['la']}) crit_hit={ex['crit_hit']}/12 "
                   f"ade={ex['ade']}")
             print(f"       explanation: {ex['expl']}")
+            print(f"       RAW[:600]: {ex['raw']}")
         print('#'*80, flush=True)
