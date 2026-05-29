@@ -56,18 +56,34 @@ OUTPUT FORMAT REQUIREMENTS:
      safety overrides the high-level nav.
 
 7. trajectory: 10 future ego waypoints at 0.5 s spacing (t = 0.5, 1.0, ...
-   5.0 s) — one line per waypoint in the form
+   5.0 s) — one line per waypoint:
        `<t>s: forward=<sign><tens><ones>.<frac>m, lateral=<sign><tens><ones>.<frac>m`
-   • `forward` is the ego-frame +x distance (meters, +forward / -reverse)
-   • `lateral` is the ego-frame +y offset (meters, +left / -right)
-   • each coordinate has a sign (`+`/`-`), two integer digits, ONE decimal
-   Example output (current speed 15.0 m/s, going straight, no turn):
-       0.5s: forward=+00.5m, lateral=+00.0m
-       1.0s: forward=+05.5m, lateral=+00.0m
-       ...
-   At 15.0 m/s the forward distance grows by ~7.50 m per
-   0.5 s step. Lateral offset stays near 0 when going straight; grows
-   negative on a right turn, positive on a left turn.
+
+   Coordinate frame:
+   • `forward` = ego-frame x. POSITIVE = ahead.
+   • `lateral` = ego-frame y. POSITIVE = LEFT of the car;
+     NEGATIVE = RIGHT of the car.
+
+   The lateral SIGN encodes the turn direction; the lateral MAGNITUDE
+   encodes how aggressively the ego deviates from the original heading:
+
+     GO_LEFT     → lateral signs are POSITIVE, magnitude grows over time
+                   (e.g. +00.3m → +00.8m → +01.5m → +02.4m)
+     GO_RIGHT    → lateral signs are NEGATIVE, magnitude grows over time
+                   (e.g. -00.3m → -00.8m → -01.5m → -02.4m)
+     GO_STRAIGHT → lateral stays near zero (sign +, magnitude 00.0m)
+
+   Worked example for the CURRENT sample (instruction=GO_STRAIGHT,
+   speed 15.0 m/s) — your output should look like:
+       0.5s: forward=+07.5m, lateral=+00.0m
+       1.0s: forward=+15.0m, lateral=+00.0m
+       2.5s: forward=+37.5m, lateral=+00.0m
+       5.0s: forward=+75.0m, lateral=+00.0m
+       (lateral stays 00.0 for all 10 lines)
+
+   At 15.0 m/s the forward distance grows ~7.50 m per 0.5 s
+   step. Turning lateral grows ~0.3 m per 0.5 s step at low speed,
+   ~0.8 m per step at moderate speed.
 
 TEMPLATE (fill the <|mdm_mask|> positions only — keep all other characters
 verbatim):

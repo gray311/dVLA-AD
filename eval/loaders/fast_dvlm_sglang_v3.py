@@ -268,6 +268,35 @@ def generate(bundle, image_paths, question, max_new_tokens=None, temperature=0.0
     # Build per-position vocab gates. Length matches padded template.
     gates = _build_v3_position_gates(tokenizer, slot_info, n_template)
     json_bad = list(bundle.get("json_blacklist") or [])
+
+    # --- nav-conditional lateral gate ---------------------------------------
+    # navigation_command is an INPUT (we are told the maneuver), so the lateral
+    # verb is not something to "predict" — constrain it. This makes nav accuracy
+    # deterministic and robust to steps_per_chunk / slot-length tuning (the soft
+    # nav-injection alone is fragile: at steps=16 it flips GO_RIGHT to "keep
+    # lane"). We must *force* the maneuver, not merely forbid the opposite
+    # direction: allowing "lane" lets GO_RIGHT escape to "keep lane". So for a
+    # turn command we drop "keep"/"lane" entirely (lat_w1 ∈ {turn,change},
+    # lat_w2 ∈ {left|right}); for GO_STRAIGHT we pin lat_w1=keep, lat_w2=lane.
+    if nav_command:
+        enc1 = lambda s: (tokenizer.encode(s, add_special_tokens=False) or [-1])[0]
+        ids = {w: enc1(w) for w in ("left", "right", "lane", "keep", "turn", "change")}
+        nav = nav_command.upper()
+        if "LEFT" in nav:
+            w1_allow, w2_allow = {ids["turn"], ids["change"]}, {ids["left"]}
+        elif "RIGHT" in nav:
+            w1_allow, w2_allow = {ids["turn"], ids["change"]}, {ids["right"]}
+        else:  # GO_STRAIGHT / unknown → keep lane
+            w1_allow, w2_allow = {ids["keep"]}, {ids["lane"]}
+        kind_allow = {"lat_w1": w1_allow, "lat_w2": w2_allow}
+        for local_pos, kind in slot_info:
+            allow = kind_allow.get(kind)
+            if allow and local_pos < n_template:
+                base = gates[local_pos]
+                gates[local_pos] = sorted(
+                    allow if base is None else (set(base) & allow) or allow
+                )
+
     # Also exclude JSON-meta tokens from gated allowlists in case any sneak in.
     json_bad_set = set(json_bad)
     for i, allowed in enumerate(gates):
@@ -298,10 +327,30 @@ def generate(bundle, image_paths, question, max_new_tokens=None, temperature=0.0
         # rep_penalty * count_so_far. Plus within-step dedup ensures top-K
         # commits in one step pick distinct tokens.
         "dllm_template_rep_penalty_positions": rep_positions,
-        "dllm_template_rep_penalty": 2.0,
-        # Steps per chunk (caller override → default 4). 4 = fast (1.7-2s)
-        # but coarser ADE; 8 = closer to transformers loader's ADE at 2-3s.
-        "dllm_template_steps_per_chunk": kwargs.get("steps_per_chunk", 4),
+        # rep_penalty default depends on the explanation fill mode:
+        #   parallel top-K → 4.0: needed to suppress the `upup`/`speedspeed`
+        #     token-repetition collapse when many adjacent masks commit at once.
+        #   L2R/AR → 0.0: one-at-a-time decoding already conditions on committed
+        #     left context, so it doesn't repeat; a nonzero penalty there HURTS
+        #     — it pushes the natural token off (e.g. "overcast"→"scast",
+        #     orphan "ists") to produce subword fragments.
+        "dllm_template_rep_penalty": kwargs.get(
+            "rep_penalty", 0.0 if kwargs.get("explanation_l2r", True) else 4.0,
+        ),
+        # steps_per_chunk 16 (was 4): the dominant lever for explanation
+        # coherence. More refinement passes → each committed token conditions
+        # on more already-decided neighbors, so the prose reads as sentences
+        # rather than word-salad. At the full 100-mask slot this lands at
+        # ~2.3-2.5s; nav stays 5/5 via the conditional lateral gate above
+        # (not the fragile soft-injection).
+        "dllm_template_steps_per_chunk": kwargs.get("steps_per_chunk", 16),
+        # Fill the explanation slot strictly left-to-right, one token per
+        # forward (AR), so each token conditions on its committed left context.
+        # Removes the parallel-commit BPE-boundary glue ("cyclistsists") that
+        # top-K diffusion produces on the long free-text run. Structured slots
+        # (critical/behavior/trajectory) still fill in parallel. Costs ~1 extra
+        # forward per explanation token (latency ↑), so it's the quality knob.
+        "dllm_template_explanation_l2r": kwargs.get("explanation_l2r", True),
     }
 
     torch.cuda.synchronize()
@@ -317,7 +366,42 @@ def generate(bundle, image_paths, question, max_new_tokens=None, temperature=0.0
     if isinstance(out, list):
         out = out[0]
     text = out.get("text", "") if isinstance(out, dict) else str(out)
+    text = _truncate_explanation_bleed(text)
     return text, latency
+
+
+# Markers that signal the explanation has stopped being real prose and started
+# bleeding the next JSON field's name / the trajectory numbers into the slot.
+# The model produces coherent content for ~50-70 tokens, then (forced to fill
+# the remaining masks) drifts into this. Banning the tokens just makes it route
+# around them (mangled / foreign-script variants), so instead we KEEP the good
+# prefix and drop the bleed tail from the decoded string.
+import re as _re
+
+_BLEED_MARKERS = _re.compile(
+    r"(future[_ ]?meta|meta[_ ]?behavior|_behavior|behaviorfuture|futurefuture|"
+    r"longitudinal|lateral\s*:|trajectory|waypoint|\bego\b|未来|"
+    r"\d+(?:\.\d+)?\s*s\s*:|forward\s*=|lateral\s*=)",
+    _re.IGNORECASE,
+)
+
+
+def _truncate_explanation_bleed(text: str) -> str:
+    """Cut the `explanation` value at the first bleed marker, keeping the
+    coherent prefix. Leaves the rest of the JSON (behavior, trajectory) intact."""
+    m = _re.search(r'("explanation":\s*")(.*?)("\s*,\s*"(?:navigation_command|future_meta_behavior)")',
+                   text, _re.DOTALL)
+    if not m:
+        return text
+    exp = m.group(2)
+    bleed = _BLEED_MARKERS.search(exp)
+    if not bleed:
+        return text
+    clean = exp[:bleed.start()]
+    # Trim a dangling partial word and trailing separators/space.
+    clean = _re.sub(r"\s+\S*$", "", clean) if " " in clean else clean
+    clean = clean.rstrip(" ,.;:-_")
+    return text[:m.start(2)] + clean + text[m.end(2):]
 
 
 def shutdown(bundle):

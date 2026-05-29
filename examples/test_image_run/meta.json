@@ -1,5 +1,5 @@
 {
-  "image": "/weka/home/ext-yingzima/dVLA-AD/examples/test_image.png",
+  "image": "/weka/home/ext-yingzima/dVLA-AD-ad4fcc21/examples/test_image.png",
   "scenario": "Highway, vehicle on fire ahead, orange cones diverting traffic. Ego cruising at 15 m/s, lightly decelerating, nav=GO_STRAIGHT.",
   "mock_speed_m_s": 15.0,
   "mock_accel_m_s2": -0.5,

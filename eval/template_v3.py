@@ -13,6 +13,7 @@ Fast-dVLM. After fill, we extract:
 """
 from __future__ import annotations
 import math
+import os
 import re
 import json
 from typing import List, Tuple
@@ -30,7 +31,10 @@ CRITICAL_CATEGORIES = [
 # critical_objects: 2 mask tokens per category — just enough for "none" or a
 # short 2-token phrase like "black car" / "green light".
 N_CRITICAL_TOKENS = 2
-N_EXPLANATION_TOKENS = 100
+# Explanation slot length. Overridable via env for tuning: the real content
+# is ~2-3 sentences (~50-70 tokens); a longer slot lets the model run out of
+# things to say and drift into bleeding the next JSON fields into the prose.
+N_EXPLANATION_TOKENS = int(os.environ.get("DVLA_N_EXPLANATION_TOKENS", "100"))
 
 # Trajectory: 10 waypoints @ 2 Hz (0.5 s spacing) covering 5 s horizon.
 # Each waypoint = `<sign><tens><ones>.<frac>,<sign><tens><ones>.<frac>` with
