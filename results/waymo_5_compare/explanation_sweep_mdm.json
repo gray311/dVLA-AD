@@ -1,0 +1,71 @@
+{
+  "9ac9e56e4ac9c": {
+    "nav": "GO_LEFT",
+    "baseline  steps=4  rep=2.0": {
+      "explanation": "The scene shows a white brick wall with a parking, street. and the driver is driving red car the speed left instruction to The instructions on the road are go turn lane of The vehicles there that no traffic is no other hazards or pedestrians in so current can future behavior safe action without such as lane lateral  forward at 0 mm5 keep speed at 01235 mms lateral right forwards.future trajectory will be (longitudinal: upup, slow down now),",
+      "latency_s": 1.7391104698181152
+    },
+    "steps=8   rep=2.0": {
+      "explanation": "The scene shows a quiet residential street with no empty car, nearby pedestrians, or cyclists. The is visible constructioncoming emergency of other vehicles in the path. There are no traffic hazards such road elements ahead or accidentscoming vehicles that be seen yet. The driver behavior be to on left turn maintaining lane speed and 10 future ego waypoints at 005 s spacing (t = 0.5, 100 ..., ...225s) — one line per waypoint::",
+      "latency_s": 2.2609972953796387
+    },
+    "steps=16  rep=2.0": {
+      "explanation": "The scene shows a quiet street with an empty parking lot no pedestrians or cyclists, construction zones, traffic, road weather hazards. and emergency vehicles. The driver is driving at a safe 12 m/s and the current is ready prepared to make a left turn the there are no immediate hazards in front path ofThe future driving behavior and trajectory: \n\nfuture_meta_behavior.longitudinal:speed up keep speed\n\nfuture_meta.lateral:turn left keep lane\n\n0.5s: forward=+",
+      "latency_s": 2.4019134044647217
+    },
+    "steps=8   rep=4.0": {
+      "explanation": "The scene shows a quiet residential street with no empty car, nearby pedestrians, or cyclists. The is visible constructioncoming emergency of other vehicles in the path. There road hazards hazard yet seen and there weather condition overcast over clear sky conditions for driver's to instruction GOGO_LEFT go left turn.\n\n** predicted future behavior: trajectory = 0.5s: forward=+0213m, lateral=+4968m\n       1..0s: forward=-7",
+      "latency_s": 2.245486259460449
+    },
+    "steps=16  rep=4.0": {
+      "explanation": "The scene shows a quiet street with an empty parking lot no pedestrians or cyclists, and no visible traffic hazards. The driver is driving at the current speed of 1.2 m/s following The Driver instruction to GO_LEFT will there be any obstacles in the way it's car can turn left safely avoid them collision risk is currently not yet seen oncoming road hazard that would require turning right Futurefuture meta_behavior future longitudinal behaviorspeed up speed upFuture future lateral behaviorturn left turnleftFuture ego waypoints",
+      "latency_s": 2.399885892868042
+    }
+  },
+  "f1dd0e328596e": {
+    "nav": "GO_STRAIGHT",
+    "baseline  steps=4  rep=2.0": {
+      "explanation": "The scene shows a highway with multiple clear vehicles, an overcast. and no road conditions The There not no nearby hazards pedestrians or cyclistsists, construction zones or emergency vehicle found the. is also traffic of any vehicles are moving in path flow other lane there driving which means is safe going stay on the right side due to that we maintain the current speed and scene context I go straight straight as per driver instruction The  future behavior_behavior.longlong longitudinal: speedspeedup up keepkeep speed down nownow",
+      "latency_s": 1.9131476879119873
+    },
+    "steps=8   rep=2.0": {
+      "explanation": "The scene is a clear highway with an over car, no the zone, and no construction zones. is are few nearby of traffic flow including a white car and no pedestrian or in there path The There are any hazards hazard ahead such accident or fire oncoming emergency or blocked debris coming from the road The driver instruction is to go straight which matches current speed AND not hazardous hazard Therefore, will slow down to keep speed for  s20.5 s before then speeding up at 219 m",
+      "latency_s": 2.2391467094421387
+    },
+    "steps=16  rep=2.0": {
+      "explanation": "The scene shows a multi highway with clear traffic flow and no visible hazards. The white car is approaching from the left lane, and driver is instructed to go straight. The current speed of 21 m9, which is less than 1 m/s, that the path clear ahead. I speed up to maintain safe driving behavior.\n\n**future_meta_behavior.longlongitudinal**:speed up keepkeep\n\n**\n\n**future_behavior.lateralateral**:keeplane\n\n0.5s: forward=+",
+      "latency_s": 2.379471778869629
+    },
+    "steps=8   rep=4.0": {
+      "explanation": "The scene is a clear highway with an over car, no the zone, and calm traffic flow. are white vehicle on pedestrian or cyclistist in path hazard from any emergencycoming vehicles or animal door opening special vehicle but conflicting agent not none road has that next future will behavior: speed up21 m9 keep lateral 00 tomfuture ego trajectory5 forward=+34.8m laterals ++16.m7sforward=+54.8m laterals++",
+      "latency_s": 2.2338979244232178
+    },
+    "steps=16  rep=4.0": {
+      "explanation": "The scene shows a multi highway with clear traffic flow and no visible hazards. The white car is approaching from the left lane, and driver instruction is to go straight. The current speed of 21.9 m/s suggests that we should keep our speed constant as there are no immediate hazards ahead or in future frames My my planned driving behavior will be to maintain at the same forward while keeping a lateral position near zero I also plan on speeding up slightly due to relatively low cruising but path clear this frame",
+      "latency_s": 2.3802073001861572
+    }
+  },
+  "0f71456c67c9e": {
+    "nav": "GO_STRAIGHT",
+    "baseline  steps=4  rep=2.0": {
+      "explanation": "The scene shows a quiet residential street with multiple cars parked on the. no trees or buildings, visible traffic signs and sky sign road vehicles stop sign, there are no is pedestrian pedestrians seen of cyclistscomingists cyclist coming vehicle any emergency hazards debris hazard fire detected in lane path intersection collision imminent path safety object current lateral behavior: stay change keep right now Driver driver instruction go straight straight to car driving ahead left turnlane maintain speed speed upnowstrajectoryfuture forward_speed=05 1._str0",
+      "latency_s": 1.8933699131011963
+    },
+    "steps=8   rep=2.0": {
+      "explanation": "The scene shows a quiet residential street with several parked cars on no parking and some trees. The weather clear sunnyunny, and the traffic is light. There are no pedestrians, or hazards in the road the car can to go now. future instruction GOGO_STIGHIGHT\n\nfuture meta meta behavior:longitudinal speed up speed upnowfuture lateral behavior:keep lane keep lane\n\ntrajectory:\n\n       0s =<forward+01.m2m>, lateral=+00nmm",
+      "latency_s": 2.2319679260253906
+    },
+    "steps=16  rep=2.0": {
+      "explanation": "The scene shows a quiet residential street with several parked cars on either side. There are no visible pedestrianscycl cyclists, construction zones, road hazards, emergency vehicles or animals in the the traffic is calm and there. The driver instruction to GO_STRAIGHT is that current speed and path are straight ahead without any obstacles or hazards. future behavior will trajectory will be maintain the current speed and keep to straight lane as avoid any turn change for safety reasons., 0.5s: forward=+01",
+      "latency_s": 2.3734371662139893
+    },
+    "steps=8   rep=4.0": {
+      "explanation": "The scene shows a quiet residential street with several parked cars on no parking and some trees. The weather clear sunnyunny, there the traffic is light and There are vehicles car, pedestrian walking in but road has safe path of hazard hazards such as driver driving vehicle or comingcominging not cause any immediate danger ahead. For I future behavior: GOfuture up maintain left lane while go straight to keep next speed at 05 per/s for Future trajectory: 05s forward=+12m",
+      "latency_s": 2.211806535720825
+    },
+    "steps=16  rep=4.0": {
+      "explanation": "The scene shows a quiet residential street with several parked cars on either side. There are no visible pedestrianscycl cyclists, construction zones or road hazards in The sky is overcast and the weather appears calm and clear. No traffic lights emergency vehicles or animalsor other objects to be hazardous.\n\n The future driving behavior will trajectory: 0.5s: forward=+01.m2m, lateral=+01.mm\n\n 1..Os: forward=-7934mm",
+      "latency_s": 2.365333080291748
+    }
+  }
+}

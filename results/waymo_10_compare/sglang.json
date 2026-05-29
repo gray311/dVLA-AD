@@ -1,0 +1,322 @@
+[
+  {
+    "sample_id": "3721a68c3a5f6b637f192a2bc4c05824-148",
+    "nav": "GO_LEFT",
+    "speed": 0.000976718973026637,
+    "image": "/weka/home/ext-yingzima/scratchcxiao13/yingzi/workspace/waymo/val/3721a68c3a5f6b637f192a2bc4c05824/148_CAM_FRONT.jpg",
+    "gt_future_5_waypoints": [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.001953125
+      ],
+      [
+        0.0,
+        0.001953125
+      ],
+      [
+        0.0,
+        0.001953125
+      ],
+      [
+        0.0,
+        0.001953125
+      ]
+    ],
+    "sglang_template": {
+      "output": "{\"critical_objects\": {\"nearby_vehicle\": \"black car\", \"pedestrian\": \"none traffic\", \"cyclist\": \" traffic flow\", \"construction\": \"none zone\", \"traffic_element\": \"clear street\", \"weather_condition\": \"overcast\", \"road_hazard\": \"none hazard\", \"emergency_vehicle\": \"none traffic\", \"animal\": \"none traffic\", \"special_vehicle\": \"none traffic\", \"conflicting_vehicle\": \"none traffic\", \"door_opening_vehicle\": \"none traffic\"}, \"complexity\": \"simple\", \"explanation\": \"The scene shows a clear street with palm trees lining the sides. There are no visible hazards or construction. The weather is overcast, and the traffic is calm with no vehicles or pedestrians in the immediate vicinity. The driver's instruction is to go left, and current speed is zero. The road is clear, and there are no signs of traffic congestion or accidents. The driver should maintain a safe speed and proceed with caution the next 5 seconds. The driver's action should be to keep speed.\", \"navigation_command\": \"GO_LEFT\", \"future_meta_behavior\": {\"longitudinal\": \"keep speed\", \"lateral\": \"turn left\"}, \"trajectory\": \"0.5s: forward=+00.0m, lateral=+00.3m\n1.0s: forward=+00.0m, lateral=+00.5m\n1.5s: forward=+00.0m, lateral=+00.8m\n2.0s: forward=+00.0m, lateral=+01.1m\n2.5s: forward=+00.0m, lateral=+01.4m\n3.0s: forward=+00.0m, lateral=+01.7m\n3.5s: forward=+00.0m, lateral=+02.0m\n4.0s: forward=+00.0m, lateral=+02.3m\n4.5s: forward=+00.0m, lateral=+02.6m\n5.0s: forward=+00.0m, lateral=+02.9m\"}",
+      "latency_s": 2.8689310550689697
+    }
+  },
+  {
+    "sample_id": "cab6d3c2e5e831fa07c7ff1724bb72aa-148",
+    "nav": "GO_LEFT",
+    "speed": 2.0904299042107977,
+    "image": "/weka/home/ext-yingzima/scratchcxiao13/yingzi/workspace/waymo/val/cab6d3c2e5e831fa07c7ff1724bb72aa/148_CAM_FRONT.jpg",
+    "gt_future_5_waypoints": [
+      [
+        0.50341796875,
+        0.1982421875
+      ],
+      [
+        0.970703125,
+        0.451171875
+      ],
+      [
+        1.39794921875,
+        0.7490234375
+      ],
+      [
+        1.776123046875,
+        1.0771484375
+      ],
+      [
+        2.096435546875,
+        1.423828125
+      ]
+    ],
+    "sglang_template": {
+      "output": "{\"critical_objects\": {\"nearby_vehicle\": \"white truck\", \"pedestrian\": \"none traffic\", \"cyclist\": \" traffic flow\", \"construction\": \"none zone\", \"traffic_element\": \"street street\", \"weather_condition\": \"dark sky\", \"road_hazard\": \"none hazard\", \"emergency_vehicle\": \"no vehicle\", \"animal\": \"no traffic\", \"special_vehicle\": \"none traffic\", \"conflicting_vehicle\": \"no traffic\", \"door_opening_vehicle\": \"no vehicle\"}, \"complexity\": \"simple\", \"explanation\": \"The scene shows a dark street with a white truck driving ahead. There are no pedestrians, cyclists,, construction zones, traffic hazards, emergency vehicles, animals, or other vehicles in the immediate vicinity. The weather is dark, and the road appears to be clear no signs of traffic or pedestrians. The driver's instruction is to go left, but the current speed and surroundings suggest that the driver should maintain a steady speed and left turn. The driver should also be cautious of the white truck in front.\", \"navigation_command\": \"GO_LEFT\", \"future_meta_behavior\": {\"longitudinal\": \"keep up\", \"lateral\": \"turn left\"}, \"trajectory\": \"0.5s: forward=+01.5m, lateral=+00.3m\n1.0s: forward=+02.0m, lateral=+00.5m\n1.5s: forward=+03.0m, lateral=+00.8m\n2.0s: forward=+04.0m, lateral=+01.0m\n2.5s: forward=+05.0m, lateral=+01.2m\n3.0s: forward=+06.0m, lateral=+01.5m\n3.5s: forward=+07.0m, lateral=+01.8m\n4.0s: forward=+08.0m, lateral=+02.0m\n4.5s: forward=+09.0m, lateral=+02.2m\n5.0s: forward=+10.0m, lateral=+02.4m\"}",
+      "latency_s": 3.0314903259277344
+    }
+  },
+  {
+    "sample_id": "a45e0ced7d86d8413f0b830677bb6c8a-149",
+    "nav": "GO_RIGHT",
+    "speed": 0.24336931341619708,
+    "image": "/weka/home/ext-yingzima/scratchcxiao13/yingzi/workspace/waymo/val/a45e0ced7d86d8413f0b830677bb6c8a/149_CAM_FRONT.jpg",
+    "gt_future_5_waypoints": [
+      [
+        0.0888671875,
+        -0.0048828125
+      ],
+      [
+        0.263671875,
+        -0.0166015625
+      ],
+      [
+        0.5380859375,
+        -0.041015625
+      ],
+      [
+        0.9150390625,
+        -0.0849609375
+      ],
+      [
+        1.40966796875,
+        -0.169921875
+      ]
+    ],
+    "sglang_template": {
+      "output": "{\"critical_objects\": {\"nearby_vehicle\": \"white car\", \"pedestrian\": \"none person\", \"cyclist\": \" cyclist cyclist\", \"construction\": \"none zone\", \"traffic_element\": \"street light\", \"weather_condition\": \"overcast\", \"road_hazard\": \"none hazard\", \"emergency_vehicle\": \"none vehicle\", \"animal\": \"none animal\", \"special_vehicle\": \"none vehicle\", \"conflicting_vehicle\": \"none vehicle\", \"door_opening_vehicle\": \"none vehicle\"}, \"complexity\": \"simple\", \"explanation\": \"The scene shows a quiet residential street with a white car approaching from the right. The sky is over, and there are no visible hazards or construction zones. The driver's instruction is to go right, and the current speed is low, so the driver should keep speed and maintain the right lane. The white car is approaching from the right, and the driver should prepare to turn right to avoid a potential collision. The traffic is calm, and there are no pedestrians or cyclists in the path. However,\", \"navigation_command\": \"GO_RIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"keep speed\", \"lateral\": \"turn right\"}, \"trajectory\": \"0.5s: forward=+00.5m, lateral=+00.3m\n1.0s: forward=+00.2m, lateral=+00.5m\n1.5s: forward=+00.1m, lateral=+00.8m\n2.0s: forward=+00.2m, lateral=+01.3m\n2.5s: forward=+00.3m, lateral=+02.0m\n3.0s: forward=+00.4m, lateral=+02.8m\n3.5s: forward=+00.5m, lateral=+03.6m\n4.0s: forward=+00.6m, lateral=+04.4m\n4.5s: forward=+00.7m, lateral=+05.2m\n5.0s: forward=+00.8m, lateral=+06.0m\"}",
+      "latency_s": 3.0487895011901855
+    }
+  },
+  {
+    "sample_id": "a32a2ff0ab66bfa7bb0c546fe4b684db-148",
+    "nav": "GO_RIGHT",
+    "speed": 3.462490582811155,
+    "image": "/weka/home/ext-yingzima/scratchcxiao13/yingzi/workspace/waymo/val/a32a2ff0ab66bfa7bb0c546fe4b684db/148_CAM_FRONT.jpg",
+    "gt_future_5_waypoints": [
+      [
+        0.8828125,
+        -0.140625
+      ],
+      [
+        1.781005859375,
+        -0.36328125
+      ],
+      [
+        2.690185546875,
+        -0.68359375
+      ],
+      [
+        3.5927734375,
+        -1.1015625
+      ],
+      [
+        4.487060546875,
+        -1.630859375
+      ]
+    ],
+    "sglang_template": {
+      "output": "{\"critical_objects\": {\"nearby_vehicle\": \"white car\", \"pedestrian\": \"none found\", \"cyclist\": \" found here\", \"construction\": \"none found\", \"traffic_element\": \"none street\", \"weather_condition\": \"overcast\", \"road_hazard\": \"none detected\", \"emergency_vehicle\": \"not seen\", \"animal\": \"none seen\", \"special_vehicle\": \"no bus\", \"conflicting_vehicle\": \"no seen\", \"door_opening_vehicle\": \"no seen\"}, \"complexity\": \"simple\", \"explanation\": \"The scene shows a quiet residential street with a large tree in the middle of the road. There are vehicles parked on the side of the road, and a white car is approaching from the opposite direction. The weather is overcast, and there are no signs of or hazards in the immediate vicinity. The road appears to be clear, and the traffic is calm. The driver's instruction to go right is straightforward, and the should be able to maintain a safe speed and direction. The\", \"navigation_command\": \"GO_RIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"keep up\", \"lateral\": \"turn right\"}, \"trajectory\": \"0.5s: forward=+01.5m, lateral=+00.3m\n1.0s: forward=+02.7m, lateral=+00.5m\n1.5s: forward=+04.0m, lateral=+00.7m\n2.0s: forward=+05.3m, lateral=+00.9m\n2.5s: forward=+07.0m, lateral=+01.1m\n3.0s: forward=+09.7m, lateral=+01.3m\n3.5s: forward=+12.4m, lateral=+01.5m\n4.0s: forward=+15.1m, lateral=+01.7m\n4.5s: forward=+18.0m, lateral=+01.9m\n5.0s: forward=+21.0m, lateral=+02.1m\"}",
+      "latency_s": 3.0257208347320557
+    }
+  },
+  {
+    "sample_id": "e3e6244899ebdbf1a0d0d45fc513b34c-149",
+    "nav": "GO_STRAIGHT",
+    "speed": 0.0,
+    "image": "/weka/home/ext-yingzima/scratchcxiao13/yingzi/workspace/waymo/val/e3e6244899ebdbf1a0d0d45fc513b34c/149_CAM_FRONT.jpg",
+    "gt_future_5_waypoints": [
+      [
+        0.00048828125,
+        0.0
+      ],
+      [
+        0.00048828125,
+        0.0
+      ],
+      [
+        0.00048828125,
+        0.0
+      ],
+      [
+        0.00048828125,
+        0.0
+      ],
+      [
+        0.00048828125,
+        0.0
+      ]
+    ],
+    "sglang_template": {
+      "output": "{\"critical_objects\": {\"nearby_vehicle\": \"red car\", \"pedestrian\": \"walking people\", \"cyclist\": \"ists nearby\", \"construction\": \"construction zone\", \"traffic_element\": \"traffic light\", \"weather_condition\": \"overcast\", \"road_hazard\": \"po debris\", \"emergency_vehicle\": \"emergency vehicle\", \"animal\": \"dogs nearby\", \"special_vehicle\": \"service vehicle\", \"conflicting_vehicle\": \"other cars\", \"door_opening_vehicle\": \"open door\"}, \"complexity\": \"complex\", \"explanation\": \"The scene shows a busy intersection with multiple vehicles and pedestrians. A red car is approaching from the left and is the closest vehicle to the\", \"navigation_command\": \"GO_STRAIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"keep up\", \"lateral\": \"keep lane\"}, \"trajectory\": \"0.5s: forward=+00.0m, lateral=+00.0m\n1.0s: forward=+00.0m, lateral=+00.0m\n1.5s: forward=+00.0m, lateral=+00.0m\n2.0s: forward=+00.0m, lateral=+00.0m\n2.5s: forward=+00.0m, lateral=+00.0m\n3.0s: forward=+00.0m, lateral=+00.0m\n3.5s: forward=+00.0m, lateral=+00.0m\n4.0s: forward=+00.0m, lateral=+00.0m\n4.5s: forward=+00.0m, lateral=+00.0m\n5.0s: forward=+00.0m, lateral=+00.0m\"}",
+      "latency_s": 3.0136749744415283
+    }
+  },
+  {
+    "sample_id": "4b390f75983c892cbb4144d5af260054-148",
+    "nav": "GO_STRAIGHT",
+    "speed": 0.06507265576377975,
+    "image": "/weka/home/ext-yingzima/scratchcxiao13/yingzi/workspace/waymo/val/4b390f75983c892cbb4144d5af260054/148_CAM_FRONT.jpg",
+    "gt_future_5_waypoints": [
+      [
+        -0.008056640625,
+        -0.0003662109375
+      ],
+      [
+        0.0631103515625,
+        -0.002197265625
+      ],
+      [
+        0.2994384765625,
+        -0.003662109375
+      ],
+      [
+        0.7061767578125,
+        -0.0057373046875
+      ],
+      [
+        1.2626953125,
+        -0.008056640625
+      ]
+    ],
+    "sglang_template": {
+      "output": "{\"critical_objects\": {\"nearby_vehicle\": \"black car\", \"pedestrian\": \"none traffic\", \"cyclist\": \" traffic flow\", \"construction\": \"none zone\", \"traffic_element\": \"street light\", \"weather_condition\": \"overcast\", \"road_hazard\": \"none hazard\", \"emergency_vehicle\": \"none traffic\", \"animal\": \"none traffic\", \"special_vehicle\": \"none traffic\", \"conflicting_vehicle\": \"none traffic\", \"door_opening_vehicle\": \"none traffic\"}, \"complexity\": \"simple\", \"explanation\": \"The scene shows a quiet residential street at night with a few cars and street lights. The driver is to go straight, and the current speed is very low. There are no immediate hazards or complex intersections. The driver should maintain a steady speed and keep the car the same lane as the traffic flow. The road is clear, and the weather is overcast, which is typical for a night drive in a residential area. driver's action should be to maintain the current speed and keep the car straight ahead\", \"navigation_command\": \"GO_STRAIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"keep speed\", \"lateral\": \"keep lane\"}, \"trajectory\": \"0.5s: forward=+00.0m, lateral=+00.0m\n1.0s: forward=+00.0m, lateral=+00.0m\n1.5s: forward=+00.0m, lateral=+00.0m\n2.0s: forward=+00.0m, lateral=+00.0m\n2.5s: forward=+00.1m, lateral=+00.0m\n3.0s: forward=+00.2m, lateral=+00.0m\n3.5s: forward=+00.3m, lateral=+00.0m\n4.0s: forward=+00.4m, lateral=+00.0m\n4.5s: forward=+00.5m, lateral=+00.0m\n5.0s: forward=+00.6m, lateral=+00.0m\"}",
+      "latency_s": 3.0368337631225586
+    }
+  },
+  {
+    "sample_id": "e71a85db89e7ec7b551629c95a33d29f-149",
+    "nav": "GO_STRAIGHT",
+    "speed": 4.194031731034686,
+    "image": "/weka/home/ext-yingzima/scratchcxiao13/yingzi/workspace/waymo/val/e71a85db89e7ec7b551629c95a33d29f/149_CAM_FRONT.jpg",
+    "gt_future_5_waypoints": [
+      [
+        1.02197265625,
+        -0.00244140625
+      ],
+      [
+        1.9794921875,
+        -0.005859375
+      ],
+      [
+        2.86279296875,
+        -0.0087890625
+      ],
+      [
+        3.662109375,
+        -0.01220703125
+      ],
+      [
+        4.37890625,
+        -0.01611328125
+      ]
+    ],
+    "sglang_template": {
+      "output": "{\"critical_objects\": {\"nearby_vehicle\": \"black car\", \"pedestrian\": \"none traffic\", \"cyclist\": \" traffic flow\", \"construction\": \"none zone\", \"traffic_element\": \"clear street\", \"weather_condition\": \"overcast\", \"road_hazard\": \"none hazard\", \"emergency_vehicle\": \"none traffic\", \"animal\": \"none traffic\", \"special_vehicle\": \"none traffic\", \"conflicting_vehicle\": \"none traffic\", \"door_opening_vehicle\": \"none traffic\"}, \"complexity\": \"simple\", \"explanation\": \"The scene shows a clear, residential street with a few parked cars on the side. The traffic is, for the most part, calm and there are no immediate hazards or construction zones. The weather is overcast, and there are no pedestrians, cyclists, emergency, animal, or special vehicles in the immediate vicinity. The driver's instruction is to go straight, and the current speed and acceleration are suitable for maintaining a steady. The road is clear, and there are no immediate obstacles or hazards to avoid\", \"navigation_command\": \"GO_STRAIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"keep speed\", \"lateral\": \"keep lane\"}, \"trajectory\": \"0.5s: forward=+00.0m, lateral=+00.0m\n1.0s: forward=+04.1m, lateral=+00.0m\n1.5s: forward=+08.2m, lateral=+00.0m\n2.0s: forward=+12.3m, lateral=+00.0m\n2.5s: forward=+16.4m, lateral=+00.0m\n3.0s: forward=+20.5m, lateral=+00.0m\n3.5s: forward=+24.6m, lateral=+00.0m\n4.0s: forward=+88.7m, lateral=+00.0m\n4.5s: forward=+12.8m, lateral=+00.0m\n5.0s: forward=+16.9m, lateral=+00.0m\"}",
+      "latency_s": 3.0126118659973145
+    }
+  },
+  {
+    "sample_id": "567443cab762895c5a05acc838764f96-149",
+    "nav": "GO_STRAIGHT",
+    "speed": 7.170275011833318,
+    "image": "/weka/home/ext-yingzima/scratchcxiao13/yingzi/workspace/waymo/val/567443cab762895c5a05acc838764f96/149_CAM_FRONT.jpg",
+    "gt_future_5_waypoints": [
+      [
+        1.798828125,
+        -0.0162353515625
+      ],
+      [
+        3.610595703125,
+        -0.04296875
+      ],
+      [
+        5.441650390625,
+        -0.0753173828125
+      ],
+      [
+        7.28955078125,
+        -0.1048583984375
+      ],
+      [
+        9.161865234375,
+        -0.1309814453125
+      ]
+    ],
+    "sglang_template": {
+      "output": "{\"critical_objects\": {\"nearby_vehicle\": \"silver car\", \"pedestrian\": \"none traffic\", \"cyclist\": \" traffic traffic\", \"construction\": \"none traffic\", \"traffic_element\": \"power lines\", \"weather_condition\": \"clear sky\", \"road_hazard\": \"none hazard\", \"emergency_vehicle\": \"none traffic\", \"animal\": \"none traffic\", \"special_vehicle\": \"none traffic\", \"conflicting_vehicle\": \"none traffic\", \"door_opening_vehicle\": \"none traffic\"}, \"complexity\": \"simple\", \"explanation\": \"The scene shows a multi-view image of a residential street with parked cars on both sides. The sky clear and power lines overhead, indicating a calm and safe driving environment. There are no visible hazards or pedestrians, and the road appears to be clear of any obstacles The driver's instruction is to go straight, and the current speed is 7.2 m/s, which is within the cruising range. The driver should maintain current speed and keep the lane straight to avoid any potential hazards or unexpected road conditions\", \"navigation_command\": \"GO_STRAIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"keep speed\", \"lateral\": \"keep lane\"}, \"trajectory\": \"0.5s: forward=+05.5m, lateral=+00.0m\n1.0s: forward=+07.1m, lateral=+00.0m\n1.5s: forward=+17.9m, lateral=+00.0m\n2.0s: forward=+35.8m, lateral=+00.0m\n2.5s: forward=+35.8m, lateral=+00.0m\n3.0s: forward=+35.8m, lateral=+00.0m\n3.5s: forward=+35.8m, lateral=+00.0m\n4.0s: forward=+55.7m, lateral=+00.0m\n4.5s: forward=+55.8m, lateral=+00.0m\n5.0s: forward=+55.8m, lateral=+00.0m\"}",
+      "latency_s": 3.0101053714752197
+    }
+  },
+  {
+    "sample_id": "6567b0c95aae8192daea6207ca30f5bd-147",
+    "nav": "GO_STRAIGHT",
+    "speed": 28.844636319188943,
+    "image": "/weka/home/ext-yingzima/scratchcxiao13/yingzi/workspace/waymo/val/6567b0c95aae8192daea6207ca30f5bd/147_CAM_FRONT.jpg",
+    "gt_future_5_waypoints": [
+      [
+        7.174560546875,
+        -0.009765625
+      ],
+      [
+        14.248779296875,
+        -0.03466796875
+      ],
+      [
+        21.20263671875,
+        -0.07421875
+      ],
+      [
+        28.029541015625,
+        -0.116455078125
+      ],
+      [
+        34.690673828125,
+        -0.15087890625
+      ]
+    ],
+    "sglang_template": {
+      "output": "{\"critical_objects\": {\"nearby_vehicle\": \"white truck\", \"pedestrian\": \"none traffic\", \"cyclist\": \" traffic traffic\", \"construction\": \"none zone\", \"traffic_element\": \"highway\", \"weather_condition\": \"clear clear\", \"road_hazard\": \"none hazard\", \"emergency_vehicle\": \"none traffic\", \"animal\": \"none traffic\", \"special_vehicle\": \"none traffic\", \"conflicting_vehicle\": \"none traffic\", \"door_opening_vehicle\": \"none traffic\"}, \"complexity\": \"simple\", \"explanation\": \"The scene shows a clear highway with a few vehicles, including a white truck in the left lane. road conditions are clear, and there are no immediate hazards or construction zones. The driver's instruction is to go straight, and the current speed and\", \"navigation_command\": \"GO_STRAIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"keep speed\", \"lateral\": \"keep lane\"}, \"trajectory\": \"0.5s: forward=+24.8m, lateral=+00.0m\n1.0s: forward=+28.8m, lateral=+00.0m\n1.5s: forward=+42.8m, lateral=+00.0m\n2.0s: forward=+56.8m, lateral=+00.0m\n2.5s: forward=+70.8m, lateral=+00.0m\n3.0s: forward=+84.8m, lateral=+00.0m\n3.5s: forward=+98.8m, lateral=+00.0m\n4.0s: forward=+28.8m, lateral=+00.0m\n4.5s: forward=+12.8m, lateral=+00.0m\n5.0s: forward=+00.8m, lateral=+00.0m\"}",
+      "latency_s": 3.0128543376922607
+    }
+  },
+  {
+    "sample_id": "4714de6823f14ec054f617bdcfcb83c1-148",
+    "nav": "GO_STRAIGHT",
+    "speed": 15.160633008226245,
+    "image": "/weka/home/ext-yingzima/scratchcxiao13/yingzi/workspace/waymo/val/4714de6823f14ec054f617bdcfcb83c1/148_CAM_FRONT.jpg",
+    "gt_future_5_waypoints": [
+      [
+        3.795654296875,
+        0.03125
+      ],
+      [
+        7.598388671875,
+        0.11328125
+      ],
+      [
+        11.376953125,
+        0.25390625
+      ],
+      [
+        15.071533203125,
+        0.4541015625
+      ],
+      [
+        18.635986328125,
+        0.7080078125
+      ]
+    ],
+    "sglang_template": {
+      "output": "{\"critical_objects\": {\"nearby_vehicle\": \"black car\", \"pedestrian\": \"none traffic\", \"cyclist\": \" traffic flow\", \"construction\": \"none zone\", \"traffic_element\": \"traffic light\", \"weather_condition\": \"overcast\", \"road_hazard\": \"none hazard\", \"emergency_vehicle\": \"none traffic\", \"animal\": \"none traffic\", \"special_vehicle\": \"none traffic\", \"conflicting_vehicle\": \"none traffic\", \"door_opening_vehicle\": \"none traffic\"}, \"complexity\": \"simple\", \"explanation\": \"The scene shows a multi-lane road with multiple lanes of traffic. The traffic light is visible, the weather is overcast, and there are no signs of construction or emergency vehicles. The road appears to be clear of any significant hazards, and the traffic is calm and predictable. The driver's instruction is to go straight, and the current speed is 15.2 m/s, which is within the cruising speed. There are no immediate hazards or red lights, so the driver should maintain speed\", \"navigation_command\": \"GO_STRAIGHT\", \"future_meta_behavior\": {\"longitudinal\": \"keep speed\", \"lateral\": \"keep lane\"}, \"trajectory\": \"0.5s: forward=+15.2m, lateral=+00.0m\n1.0s: forward=+35.1m, lateral=+00.0m\n1.5s: forward=+55.9m, lateral=+00.0m\n2.0s: forward=+75.8m, lateral=+00.0m\n2.5s: forward=+95.7m, lateral=+00.0m\n3.0s: forward=+11.5m, lateral=+00.0m\n3.5s: forward=+31.4m, lateral=+00.0m\n4.0s: forward=+11.5m, lateral=+00.0m\n4.5s: forward=+31.4m, lateral=+00.0m\n5.0s: forward=+11.5m, lateral=+00.0m\"}",
+      "latency_s": 3.00604248046875
+    }
+  }
+]
