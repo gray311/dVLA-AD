@@ -5,7 +5,7 @@ import os
 import sys
 import time
 
-ROOT = "/weka/home/ext-yingzima/dVLA-AD"
+ROOT = "/weka/home/ext-yingzima/dVLA-AD-ad4fcc21"
 sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "eval"))
 

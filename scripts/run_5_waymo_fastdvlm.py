@@ -9,7 +9,7 @@ import sys
 import time
 import traceback
 
-ROOT = "/weka/home/ext-yingzima/dVLA-AD"
+ROOT = "/weka/home/ext-yingzima/dVLA-AD-ad4fcc21"
 sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "eval"))
 

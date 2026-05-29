@@ -42,6 +42,13 @@ def apply_torchao_config_to_model(
         quantize the model, e.g. int4wo-128 means int4 weight only quantization with group_size
         128
     """
+    # No quantization requested: skip the torchao import entirely. Newer
+    # torchao (>=0.17) removed `float8_dynamic_activation_float8_weight` from
+    # `torchao.quantization`, so importing it unconditionally crashes model
+    # load even when no quantization is used.
+    if torchao_config == "" or torchao_config is None:
+        return model
+
     # Lazy import to suppress some warnings
     from torchao.quantization import (
         float8_dynamic_activation_float8_weight,
@@ -53,9 +60,7 @@ def apply_torchao_config_to_model(
     )
     from torchao.quantization.observer import PerRow, PerTensor
 
-    if torchao_config == "" or torchao_config is None:
-        return model
-    elif "int8wo" in torchao_config:
+    if "int8wo" in torchao_config:
         quantize_(model, int8_weight_only(), filter_fn=proj_filter_conv3d)
     elif "int8dq" in torchao_config:
         quantize_(model, int8_dynamic_activation_int8_weight(), filter_fn=filter_fn)
