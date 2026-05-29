@@ -2238,6 +2238,10 @@ class ScheduleBatch(ScheduleBatchDisaggregationDecodeMixin):
                 getattr(req.sampling_params, "dllm_template_steps_per_chunk", 4)
                 for req in self.reqs
             ],
+            dllm_template_explanation_l2r=[
+                getattr(req.sampling_params, "dllm_template_explanation_l2r", False)
+                for req in self.reqs
+            ],
             dllm_config=self.dllm_config,
             reqs=self.reqs,
             has_grammar=self.has_grammar,
@@ -2371,6 +2375,7 @@ class ModelWorkerBatch:
     dllm_template_rep_penalty_positions: Optional[List[Optional[List[int]]]] = None
     dllm_template_rep_penalty: Optional[List[float]] = None
     dllm_template_steps_per_chunk: Optional[List[int]] = None
+    dllm_template_explanation_l2r: Optional[List[bool]] = None
     dllm_config: Optional[DllmConfig] = None
 
     # For constrained decoding

@@ -295,6 +295,9 @@ class ForwardBatch:
     dllm_template_rep_penalty: float = 0.0
     # Fixed-step budget for template mode.
     dllm_template_steps_per_chunk: int = 4
+    # When True, explanation (rep-penalty) positions fill strictly L2R, one
+    # token per forward (AR), instead of confidence-ordered parallel top-K.
+    dllm_template_explanation_l2r: bool = False
 
     # For extend
     extend_num_tokens: Optional[int] = None
@@ -551,6 +554,8 @@ class ForwardBatch:
                 ret.dllm_template_rep_penalty = batch.dllm_template_rep_penalty[0]
             if batch.dllm_template_steps_per_chunk:
                 ret.dllm_template_steps_per_chunk = batch.dllm_template_steps_per_chunk[0]
+            if batch.dllm_template_explanation_l2r:
+                ret.dllm_template_explanation_l2r = batch.dllm_template_explanation_l2r[0]
         elif (
             ret.spec_info is not None
             and getattr(ret.spec_info, "positions", None) is not None

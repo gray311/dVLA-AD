@@ -78,6 +78,113 @@ class HierarchyBlock(DllmAlgorithm):
                 return f"<decode_error: {e}>"
         return None
 
+    def _fill_template_l2r(
+        self, model_runner, forward_batch, rep_chunk_pos_list,
+        rep_penalty, n_steps, chunk_gates, forbidden_ids,
+    ):
+        """Template-mode chunk fill where the explanation (rep-penalty)
+        positions are committed strictly left-to-right, ONE token per forward
+        (autoregressive), while structured (non-rep) masks still fill in
+        parallel via confidence top-K.
+
+        Committing explanation tokens one-at-a-time, leftmost first, lets each
+        token condition on every token already committed to its left, which is
+        what removes the parallel-commit BPE-boundary glue ("cyclistsists",
+        "becu", "animalscominging") that confidence-ordered top-K produces on a
+        long free-text run. Returns can_run_cuda_graph from the last forward.
+        """
+        device = forward_batch.input_ids.device
+        rep_set = set(rep_chunk_pos_list)
+        state = {"forbidden": None, "keep": None, "active": None, "can_run": False}
+
+        def _logits():
+            self.fwd_count += 1
+            out = model_runner.forward(forward_batch, pp_proxy_tensors=None)
+            state["can_run"] = out.can_run_graph
+            full_logits = out.logits_output.full_logits
+            assert full_logits is not None
+            if self.token_shift > 0:
+                shifted = torch.cat([full_logits[:1], full_logits[:-1]], dim=0)
+            else:
+                shifted = full_logits
+            vocab_size = shifted.shape[-1]
+            if forbidden_ids and state["forbidden"] is None:
+                fm = torch.zeros(vocab_size, dtype=torch.bool, device=device)
+                for bid in forbidden_ids:
+                    if 0 <= bid < vocab_size:
+                        fm[bid] = True
+                state["forbidden"] = fm
+            if chunk_gates is not None and state["keep"] is None:
+                bs = forward_batch.input_ids.shape[0]
+                keep = torch.ones((bs, vocab_size), dtype=torch.bool, device=device)
+                active = torch.zeros(bs, dtype=torch.bool, device=device)
+                for lp, allowed in enumerate(chunk_gates):
+                    if allowed is None or lp >= bs:
+                        continue
+                    active[lp] = True
+                    row = torch.zeros(vocab_size, dtype=torch.bool, device=device)
+                    for aid in allowed:
+                        if 0 <= aid < vocab_size:
+                            row[aid] = True
+                    keep[lp] = row
+                state["keep"], state["active"] = keep, active
+            if state["forbidden"] is not None:
+                shifted[:, state["forbidden"]] = float("-inf")
+            if state["active"] is not None and state["active"].any():
+                block_minf = torch.full_like(shifted, float("-inf"))
+                restricted = torch.where(state["keep"], shifted, block_minf)
+                shifted = torch.where(state["active"].unsqueeze(-1), restricted, shifted)
+            if rep_penalty > 0 and rep_chunk_pos_list:
+                if self.rep_token_counts is None:
+                    self.rep_token_counts = torch.zeros(
+                        vocab_size, dtype=torch.float, device=device,
+                    )
+                if self.rep_token_counts.numel() == vocab_size:
+                    rep_pos_t = torch.tensor(
+                        rep_chunk_pos_list, dtype=torch.long, device=device,
+                    )
+                    shifted[rep_pos_t] -= rep_penalty * self.rep_token_counts.unsqueeze(0)
+            return shifted
+
+        def _masked():
+            return (forward_batch.input_ids == self.mask_id).nonzero(
+                as_tuple=True,
+            )[0].tolist()
+
+        # ---- Phase A: structured (non-rep) masks, parallel top-K ----
+        struct0 = [p for p in _masked() if p not in rep_set]
+        if struct0:
+            # ceil so all structured masks are committed within n_steps.
+            base = max(1, (len(struct0) + n_steps - 1) // n_steps)
+            for _ in range(n_steps):
+                struct = [p for p in _masked() if p not in rep_set]
+                if not struct:
+                    break
+                shifted = _logits()
+                preds = shifted.argmax(dim=-1)
+                probs = F.softmax(shifted, dim=-1)
+                conf = probs.gather(dim=-1, index=preds.unsqueeze(-1)).squeeze(-1)
+                struct_t = torch.tensor(struct, dtype=torch.long, device=device)
+                kk = min(base, len(struct))
+                top = torch.topk(conf[struct_t], kk).indices
+                commit = struct_t[top]
+                forward_batch.input_ids[commit] = preds[commit]
+
+        # ---- Phase B: explanation (rep) masks, strict L2R, 1 per forward ----
+        while True:
+            rep_masked = sorted(p for p in _masked() if p in rep_set)
+            if not rep_masked:
+                break
+            leftmost = rep_masked[0]
+            shifted = _logits()
+            tok = int(shifted[leftmost].argmax().item())
+            forward_batch.input_ids[leftmost] = tok
+            if (rep_penalty > 0 and self.rep_token_counts is not None
+                    and 0 <= tok < self.rep_token_counts.shape[0]):
+                self.rep_token_counts[tok] += 1.0
+
+        return state["can_run"]
+
     def run(
         self,
         model_runner: ModelRunner,
@@ -155,21 +262,34 @@ class HierarchyBlock(DllmAlgorithm):
             ) or []
             rep_penalty = getattr(forward_batch, "dllm_template_rep_penalty", 0.0)
             n_steps = max(1, getattr(forward_batch, "dllm_template_steps_per_chunk", 4))
+            explanation_l2r = bool(
+                getattr(forward_batch, "dllm_template_explanation_l2r", False)
+            )
 
             chunk_mask = forward_batch.input_ids == self.mask_id
             n_mask_chunk = int(chunk_mask.sum().item())
 
             if n_mask_chunk > 0:
-                # Pre-distribute commit budget across n_steps so all masks
-                # get committed by the last step. Same as transformers loader.
-                base = max(1, n_mask_chunk // n_steps)
-                remainder = n_mask_chunk % n_steps
-                budget = [base + (1 if i < remainder else 0) for i in range(n_steps)]
-                # Trim trailing zero-budget steps.
-                while budget and budget[-1] == 0:
-                    budget.pop()
-
                 rep_chunk_pos_set = set(rep_chunk_pos_list)
+
+                if explanation_l2r and rep_chunk_pos_set:
+                    # Explanation positions fill strictly L2R, one per forward
+                    # (AR); structured masks fill in parallel. Then skip the
+                    # parallel budget loop below (budget=[]).
+                    can_run_cuda_graph = self._fill_template_l2r(
+                        model_runner, forward_batch, rep_chunk_pos_list,
+                        rep_penalty, n_steps, chunk_gates, forbidden_ids,
+                    )
+                    budget = []
+                else:
+                    # Pre-distribute commit budget across n_steps so all masks
+                    # get committed by the last step. Same as transformers loader.
+                    base = max(1, n_mask_chunk // n_steps)
+                    remainder = n_mask_chunk % n_steps
+                    budget = [base + (1 if i < remainder else 0) for i in range(n_steps)]
+                    # Trim trailing zero-budget steps.
+                    while budget and budget[-1] == 0:
+                        budget.pop()
 
                 for step_idx, k in enumerate(budget):
                     cur_mask = forward_batch.input_ids == self.mask_id

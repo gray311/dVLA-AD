@@ -65,6 +65,7 @@ class SamplingParams:
         dllm_template_rep_penalty_positions: Optional[List[int]] = None,
         dllm_template_rep_penalty: float = 2.0,
         dllm_template_steps_per_chunk: int = 4,
+        dllm_template_explanation_l2r: bool = False,
     ) -> None:
         self.max_new_tokens = max_new_tokens
         self.stop_strs = stop
@@ -123,6 +124,12 @@ class SamplingParams:
         # iterations = better quality but slower. Default 4 matches the
         # transformers loader.
         self.dllm_template_steps_per_chunk = dllm_template_steps_per_chunk
+        # When True, the rep-penalty (explanation) positions are filled strictly
+        # left-to-right, one token per forward (AR), instead of confidence-
+        # ordered parallel top-K. Each explanation token then conditions on all
+        # already-committed tokens to its left, removing the parallel-commit
+        # BPE-boundary glue artifacts. Structured slots still fill in parallel.
+        self.dllm_template_explanation_l2r = dllm_template_explanation_l2r
         # In template mode, the model is allowed to commit EOS at "soft-end"
         # slots (e.g., critical_object tail after "none"). We must NOT let
         # those EOS tokens terminate the response — the full scaffold needs
