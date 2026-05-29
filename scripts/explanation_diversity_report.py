@@ -20,7 +20,7 @@ import os
 import re
 from collections import Counter
 
-ROOT = "/weka/home/ext-yingzima/dVLA-AD"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # repo root (parent of scripts/)
 OUT_DIR = os.path.join(ROOT, "results", "waymo_10_compare")
 
 

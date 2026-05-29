@@ -1,7 +1,7 @@
 """A/B: explanation parallel top-K vs strict L2R/AR. Same samples, print
 explanation + latency for each mode to see if L2R removes the glue artifacts."""
 import json, os, sys
-ROOT = "/weka/home/ext-yingzima/dVLA-AD-ad4fcc21"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # repo root (parent of scripts/)
 sys.path.insert(0, ROOT); sys.path.insert(0, os.path.join(ROOT, "eval"))
 from eval.template_v3 import build_prompt_v3
 DATA = "/weka/home/ext-yingzima/scratchcxiao13/yingzi/workspace/dvlm/dvlm-ad_waymo_e2e_val_cot.json"

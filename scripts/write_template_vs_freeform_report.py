@@ -3,9 +3,10 @@ on the same 5 Waymo samples. Verifies the user's requirement that template
 quality does NOT regress vs free-form.
 """
 import json
+import os
 import re
 
-ROOT = "/weka/home/ext-yingzima/dVLA-AD"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # repo root (parent of scripts/)
 
 
 def _field(txt, key):

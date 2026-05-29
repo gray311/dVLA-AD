@@ -5,7 +5,7 @@ import json
 import os
 import re
 
-ROOT = "/weka/home/ext-yingzima/dVLA-AD"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # repo root (parent of scripts/)
 OUT_DIR = os.path.join(ROOT, "results", "waymo_10_compare")
 
 LONG_VALID = {("speed", "up"), ("slow", "down"), ("keep", "speed"), ("stop", "now")}

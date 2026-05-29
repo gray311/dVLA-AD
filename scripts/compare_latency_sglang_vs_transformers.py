@@ -28,7 +28,7 @@ import os
 import sys
 import traceback
 
-ROOT = "/weka/home/ext-yingzima/dVLA-AD"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # repo root (parent of scripts/)
 sys.path.insert(0, ROOT)
 sys.path.insert(0, os.path.join(ROOT, "eval"))
 

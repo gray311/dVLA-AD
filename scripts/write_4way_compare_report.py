@@ -2,9 +2,10 @@
 Fast-dVLM SGLang (free-form gen) vs dVLM-AD.
 """
 import json
+import os
 import re
 
-ROOT = "/weka/home/ext-yingzima/dVLA-AD"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # repo root (parent of scripts/)
 
 
 def _field(txt, key):

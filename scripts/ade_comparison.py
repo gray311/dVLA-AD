@@ -11,7 +11,7 @@ import math
 import os
 import sys
 
-ROOT = "/weka/home/ext-yingzima/dVLA-AD"
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # repo root (parent of scripts/)
 sys.path.insert(0, os.path.join(ROOT, "eval"))
 from template_v3 import parse_filled
 
